@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: sch-graduation-rag-chatbot
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: RAG_VECTOR_DEFAULT
+        value: "0"
+      - key: HF_HOME
+        value: /tmp/huggingface
+      - key: GRADUATION_APP_DATA_DIR
+        value: /tmp/sch-graduation-data

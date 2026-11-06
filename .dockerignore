@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+.local
+.index
+.venv
+.git
+.pytest_cache
+.verification
+**/__pycache__
+**/*.sqlite3*
+graduation-rag-chatbot
+tests

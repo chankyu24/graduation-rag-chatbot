@@ -1,0 +1,11 @@
+.env
+.venv/
+.index/
+__pycache__/
+.pytest_cache/
+
+.verification/
+
+.local/
+*.sqlite3
+*.sqlite3-*

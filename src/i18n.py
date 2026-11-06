@@ -1,0 +1,267 @@
+"""Offline interface glossary. Korean regulation names stay canonical in saved data."""
+import re
+
+LANGUAGES={'ko':'한국어','en':'English','zh':'简体中文','ja':'日本語'}
+# Each value is English, Simplified Chinese, Japanese; Korean is the lookup key.
+MESSAGES={
+'순천향대 졸업 길잡이':('SCH Graduation Guide','顺天乡大学毕业指南','順天郷大学 卒業ガイド'),
+'PDF 근거로 알아보고, 영역별 조건으로 준비하는 나의 졸업인증':('Check source-backed certification requirements and plan your next steps.','依据PDF核对毕业认证要求，规划下一步。','PDFの根拠で卒業認証要件を確認し、次の準備を進めましょう。'),
+'로그인':('Sign in','登录','ログイン'),'회원가입':('Create account','注册','アカウント登録'),
+'학번':('Student ID','学号','学籍番号'),'이름':('Name','姓名','氏名'),
+'비밀번호':('Password','密码','パスワード'),'비밀번호 확인':('Confirm password','确认密码','パスワードの確認'),
+'앱 전용 비밀번호':('App-only password','本应用专用密码','このアプリ専用パスワード'),
+'학교 학사시스템과 연결되지 않은 과제용 앱 계정입니다. 학교 비밀번호를 사용하지 마세요.':('This classroom app uses independent accounts. Use a new password, not your university password.','本课程应用使用独立账户，未连接学校教务系统。请使用新密码，不要使用学校密码。','授業用アプリの独立アカウントです。大学のパスワードは使わず、新しいものを設定してください。'),
+'앱 계정 만들기':('Create app account','创建应用账户','アプリ用アカウント作成'),
+'계정을 만들었습니다. 로그인 탭에서 로그인해 주세요.':('Account created. Sign in using the Sign in tab.','账户已创建，请在登录页登录。','アカウントを作成しました。ログインタブからログインしてください。'),
+'학번 또는 비밀번호가 올바르지 않습니다.':('Incorrect student ID or password.','学号或密码不正确。','学籍番号またはパスワードが正しくありません。'),
+'비밀번호 확인이 일치하지 않습니다.':('Passwords do not match.','两次输入的密码不一致。','パスワードが一致しません。'),
+'학번은 8~12자리 숫자로 입력하세요.':('Enter an 8–12 digit student ID.','学号须为8至12位数字。','学籍番号は8～12桁の数字で入力してください。'),
+'앱 전용 비밀번호는 10~128자여야 합니다.':('Use an app-only password of 10–128 characters.','专用密码须为10至128个字符。','専用パスワードは10～128文字で入力してください。'),
+'비밀번호에 영문과 숫자를 함께 넣어 주세요.':('Include both letters and numbers.','密码需包含英文字母和数字。','英字と数字の両方を含めてください。'),
+'이미 등록된 학번입니다.':('This student ID is already registered.','该学号已注册。','この学籍番号は登録済みです。'),
+'로그인 시도가 많습니다. 5분 후 다시 시도하세요.':('Too many attempts. Try again in five minutes.','尝试次数过多，请5分钟后重试。','試行回数が多すぎます。5分後に再試行してください。'),
+'이름은 1~60자로 입력하세요.':('Enter a name of 1–60 characters.','姓名须为1至60个字符。','氏名は1～60文字で入力してください。'),
+'로그아웃':('Sign out','退出登录','ログアウト'),'메뉴':('Menu','菜单','メニュー'),
+'현재 비밀번호':('Current password','当前密码','現在のパスワード'),'새 비밀번호':('New password','新密码','新しいパスワード'),
+'비밀번호 변경':('Change password','修改密码','パスワード変更'),
+'현재 비밀번호가 올바르지 않습니다.':('Incorrect current password.','当前密码不正确。','現在のパスワードが正しくありません。'),
+'비밀번호를 변경했습니다.':('Password changed.','密码已修改。','パスワードを変更しました。'),
+'PDF 단독 RAG':('PDF-only chat','单一PDF问答','PDF単独チャット'),
+'다중 문서 RAG':('Multiple-document chat','多文档问答','複数文書チャット'),
+'졸업요건 진단':('Certification check','毕业认证诊断','卒業認証チェック'),
+'진단 결과':('My results','诊断结果','診断結果'),'학과 안내':('Department guide','院系指南','学科ガイド'),
+'대학교':('University','大学','大学'),'순천향대학교':('Soonchunhyang University','顺天乡大学','順天郷大学'),
+'학과':('Department','院系','学科'),'입학연도 (학번 앞 4자리)':('Admission year (first four ID digits)','入学年份（学号前四位）','入学年度（学籍番号の先頭4桁）'),
+'입학연도':('Admission year','入学年份','入学年度'),
+'교육과정: 제공된 2026년도 학과기준 시안':('Curriculum: supplied 2026 department draft','依据：提供的2026年院系标准草案','基準：提供された2026年度学科基準案'),
+'인증점수 ≠ 교과 이수학점':('Certification points ≠ academic credits','认证分数 ≠ 课程学分','認証点数 ≠ 修得単位'),
+'검색 범위: ':('Search scope: ','检索范围：','検索範囲：'),
+'제공 PDF 한 개':('Supplied PDF only','仅提供的PDF','提供PDFのみ'),'여러 PDF 통합':('All registered PDFs','全部已登记PDF','登録済みPDF全体'),
+'다국어 임베딩 + FAISS':('Multilingual embeddings + FAISS','多语言嵌入 + FAISS','多言語埋め込み + FAISS'),
+'LLM 답변 사용':('Use LLM answers','使用大模型回答','LLM回答を使用'),
+'문서에 물어보세요':('Ask about the requirements','询问毕业要求','卒業要件を質問する'),
+'현재 대화 지우기':('Clear this conversation','清除此对话','この会話を消去'),
+'문서 등록 및 검색 상태':('Document registration and search status','文档登记及检索状态','文書登録・検索状況'),
+'졸업기준 자료실':('Requirements library','毕业要求资料库','卒業要件ライブラリ'),
+'PDF 추가':('Add PDF','添加PDF','PDFを追加'),'선택한 문서 등록':('Register selected files','登记所选文档','選択した文書を登録'),
+'등록할 PDF를 선택해 주세요.':('Choose a PDF to register.','请选择需要登记的PDF。','登録するPDFを選択してください。'),
+'이수한 과목 선택':('Select completed courses','选择已完成课程','修得済み科目を選択'),
+'직접 입력 (한 줄에 한 과목)':('Enter courses (one per line)','手动输入（每行一门课程）','手入力（1行に1科目）'),
+'수강 과목 CSV / XLSX':('Upload course list: CSV / XLSX','上传课程列表：CSV / XLSX','履修一覧：CSV / XLSX'),
+'해당 영역에서 이수한 과목명':('Completed course in this category','该领域已完成课程名称','該当分野の修得済み科目名'),
+'학사시스템에서 중핵교양 국제사회언어영역 이수 여부를 확인함':('I checked completion of the international-language core category in the university system.','已在教务系统确认核心通识国际社会语言领域的修读情况。','学務システムで中核教養・国際社会言語分野の修得状況を確認した。'),
+'해당 인재상의 공식 인정 점수를 확인함':('I checked the official points in this competency category.','已确认该能力领域的正式认定分数。','この能力分野の正式な認定点数を確認した。'),
+'취득한 PDF 권장 자격증':('Recommended certificates obtained (PDF list)','已取得的PDF推荐资格证书','取得済みのPDF推奨資格'),
+'학사시스템의 필요 점수와 비교 (선택)':('Compare with university system requirements (optional)','与教务系统要求分数比较（可选）','学務システムの必要点数と比較（任意）'),
+'이수 내역을 모두 입력했습니다. 미선택 항목은 미이수입니다.':('My record is complete. Unselected items are not completed.','已完整输入修读记录，未选择的项目视为未完成。','履修記録をすべて入力した。未選択の項目は未修得とする。'),
+'나의 졸업인증 진단':('Check my certification','诊断我的毕业认证','卒業認証をチェック'),
+'입력 저장':('Save my inputs','保存输入','入力を保存'),
+'내 입력과 진단 결과를 저장했습니다.':('Inputs and results saved to your app account.','输入和诊断结果已保存至您的应用账户。','入力と診断結果をアプリアカウントに保存しました。'),
+'저장한 입력을 불러왔습니다.':('Saved inputs restored.','已恢复保存的输入。','保存した入力を復元しました。'),
+'다면적 졸업인증 충족 예상':('Certification requirements appear met','预计满足多维毕业认证要求','多面的卒業認証の要件を満たす見込み'),
+'전체 졸업 가능 여부: 확인 필요 (졸업학점·기타 졸업요건 문서 미제공)':('Overall graduation eligibility: needs review (credit and other official rules not supplied).','总体毕业资格：需确认（尚缺毕业学分及其他正式规定）。','卒業全体の可否：要確認（卒業単位・その他の規程が未提供）。'),
+'다음에 준비할 항목':('Next steps','接下来需要准备的项目','次に準備する項目'),
+'나의 진단 결과':('My certification results','我的毕业认证结果','自分の認証結果'),
+'진단 결과 JSON 다운로드':('Download results as JSON','下载JSON诊断结果','診断結果をJSONで保存'),
+'현재 인증점수 / 필요점수':('Verified certification points / required','已确认认证分数 / 要求分数','確認済み認証点数 / 必要点数'),
+'이 서비스는 다면적 졸업인증을 진단합니다. 최종 졸업 확정과 졸업학점은 학교 공식 학사시스템에서 확인하세요.':('This app checks certification requirements. Confirm final graduation and academic credits in the official university system.','本应用检查毕业认证要求。最终毕业资格与学分请在学校正式教务系统确认。','本アプリは卒業認証要件を確認します。最終的な卒業可否と単位は大学の正式な学務システムで確認してください。'),
+'입력 내역 또는 기준 문서가 변경되었습니다. 아래는 지난 진단 결과입니다. 진단 메뉴에서 다시 계산해 주세요.':('Inputs or documents have changed. This is a previous result; run the check again.','输入或标准文档已变更。下方为旧结果，请重新诊断。','入力または基準文書が変更されました。以前の結果のため再計算してください。'),
+'입력 내용이 지난 진단 이후 변경되었습니다. 결과를 다시 계산해 주세요.':('Inputs changed since the last check. Please recalculate.','上次诊断后输入已变更，请重新计算。','前回の診断後に入力が変わりました。再計算してください。'),
+'API 키가 없어도 원문 근거를 검색합니다. 자연어 요약은 LLM 연결 시 제공됩니다.':('Source search works without an API key. LLM summaries are optional.','无需API密钥也可检索原文依据；连接大模型后可提供摘要。','APIキーなしでも原文を検索できます。LLM接続時に要約を利用できます。'),
+'원문 과목명과 근거는 한국어로 함께 표시됩니다. 자유로운 답변 번역은 API 연결이 필요할 수 있습니다.':('Korean course names and source evidence are retained. Free-form answer translation may require an API.','同时保留韩文课程名和原文依据。自由问答翻译可能需要API连接。','韓国語の科目名と原文を併記します。自由な回答の翻訳にはAPI接続が必要な場合があります。'),
+'PDF와 제공 학사화면의 차이':('PDF versus supplied university screenshots','PDF与所提供教务截图的差异','PDFと提供された学務画面の違い'),
+'학과 홈페이지':('Department website','院系官网','学科ホームページ'),
+'교육과정 안내':('Curriculum guide','课程设置','教育課程案内'),
+'학과사무실: 041-530-1667 · 미디어랩스관 ML202':('Department office: 041-530-1667 · Media Labs ML202','院系办公室：041-530-1667 · Media Labs ML202','学科事務室：041-530-1667 · Media Labs ML202'),
+}
+
+GLOSSARY={
+'AI·빅데이터학과':('AI and Big Data','AI与大数据系','AI・ビッグデータ学科'),
+'컴퓨터소프트웨어공학과':('Computer Software Engineering','计算机软件工程系','コンピュータソフトウェア工学科'),
+'정보보호학과':('Information Security','信息安全系','情報セキュリティ学科'),
+'의료IT공학과':('Medical IT Engineering','医疗IT工程系','医療IT工学科'),
+'사물인터넷학과':('Internet of Things','物联网系','IoT学科'),
+'메타버스&게임학과':('Metaverse and Games','元宇宙与游戏系','メタバース・ゲーム学科'),
+'대학공통':('University common','大学共同','大学共通'),
+'비교과미지정':('Unspecified extracurricular','非指定课外活动','指定外課外活動'),
+'비교과지정':('Designated extracurricular','指定课外活动','指定課外活動'),
+'교과':('Curricular','课程','教科'),
+'충족':('Met','满足','充足'),'미충족':('Not met','不满足','未充足'),'확인 필요':('Needs review','需确认','要確認'),
+'인간사랑':('Love of Humanity','人间之爱','人間愛'),
+'ASP(1,2학기)':('ASP (both semesters)','ASP（第一、二学期）','ASP（前期・後期）'),
+'자기주도상담':('Self-directed counseling','自主咨询','自主相談'),
+'봉사학습':('Service learning','志愿服务学习','奉仕学習'),
+'자기개발과전공탐색(M&M)':('Self-development and major exploration (M&M)','自我发展与专业探索（M&M）','自己開発と専攻探索（M&M）'),
+'자기개발과전공탐색':('Self-development and major exploration','自我发展与专业探索','自己開発と専攻探索'),
+'졸업필수활동':('Mandatory graduation activities','毕业必修活动','卒業必須活動'),
+'졸업종합지도':('Comprehensive graduation guidance','毕业综合指导','卒業総合指導'),
+'졸업및취ㆍ창업지도':('Graduation and career/start-up guidance','毕业与就业创业指导','卒業・就職・起業指導'),
+'현대기본영어':('Modern Basic English','现代基础英语','現代基礎英語'),
+'현대실용영어':('Modern Practical English','现代实用英语','現代実用英語'),
+'예비창업설계':('Pre-startup Design','创业预备设计','起業準備設計'),
+'중핵교양 국제사회언어영역 택1':('One core general-education international-language course','核心通识国际社会语言领域课程选一','中核教養・国際社会言語分野から1科目'),
+'코딩역량인증제 Level2 이상':('Coding competency certification Level 2 or higher','编程能力认证Level 2以上','コーディング能力認証Level 2以上'),
+'AI·SW전공역량졸업인증제':('AI/SW major competency graduation certification','AI/SW专业能力毕业认证','AI・SW専攻能力卒業認証'),
+'자격증/경진대회참가/경진대회수상':('Certificate / competition participation / competition award','资格证书／竞赛参加／竞赛获奖','資格／競技会参加／競技会入賞'),
+'비교과자율활동(공감)':('Autonomous extracurricular (Empathy)','自主课外活动（共情）','自主課外活動（共感）'),
+'비교과자율활동(창의)':('Autonomous extracurricular (Creativity)','自主课外活动（创造）','自主課外活動（創造）'),
+'비교과자율활동(글로벌)':('Autonomous extracurricular (Global)','自主课外活动（全球）','自主課外活動（グローバル）'),
+'학과활동':('Department activities','院系活动','学科活動'),'전공상담':('Major counseling','专业咨询','専攻相談'),
+'경진대회 참가':('Competition participation','竞赛参加','競技会参加'),'경진대회 수상':('Competition award','竞赛获奖','競技会入賞'),
+'공감':('Empathy','共情','共感'),'창의':('Creativity','创造','創造'),'글로벌':('Global','全球','グローバル'),
+'공식 인정 점수':('officially recognized points','正式认定分数','正式認定点数'),
+'공식 이수/인증 완료':('officially completed/certified','已正式修完／取得认证','正式に修得・認証済み'),
+'필수 과목':('required courses','必修课程','必修科目'),
+'학사시스템 필요 점수':('university-system required points','教务系统要求分数','学務システムの必要点数'),
+'부족한 필수 항목: ':('Missing requirements: ','未满足的必修项目：','不足している必須項目：'),
+'학번':('cohort','级','年度入学'),
+'진단 시각: ':('Checked at: ','诊断时间：','診断日時：'),
+'근거: ':('Source: ','依据：','出典：'),'합계':('Total','合计','合計'),
+'필요 합계':('Total required','要求合计','必要合計'),
+'원본 p.':('Source p.','原文第','原文 p.'),
+'부족':('shortage','不足','不足'),'필요':('required','需要','必要'),
+'회/학기당':('per participation/semester','每次／每学期','回・学期あたり'),
+'최소':('minimum','最低','最低'),'레벨 또는 시험점수':('level or test score','等级或考试分数','レベルまたは試験点数'),
+'점':(' points','分','点'),
+}
+COLUMNS={'area':('Category','领域','分野'),'required':('Required','要求分数','必要点数'),'earned':('Recognized','已认定','認定点数'),'shortage':('Shortage','不足分数','不足点数'),'status':('Status','状态','状態'),'name':('Item','项目','項目'),'detail':('Details','说明','詳細'),'action':('Next step','下一步','次の準備'),'remaining_count':('Remaining participations','剩余次数','残り回数')}
+
+
+def tr(text,lang='ko'):
+    if not isinstance(text,str) or lang=='ko': return text
+    index={'en':0,'zh':1,'ja':2}.get(lang)
+    if index is None: return text
+    if text in MESSAGES: return MESSAGES[text][index]
+    # Single-pass replacement prevents translating inside inserted translations.
+    mapping={key:value[index] for key,value in {**GLOSSARY,**MESSAGES}.items()}
+    pattern='|'.join(re.escape(key) for key in sorted(mapping,key=len,reverse=True))
+    return re.sub(pattern,lambda match:mapping[match.group()],text)
+
+
+def item_label(text,lang):
+    translated=tr(text,lang)
+    return text if translated==text else f'{translated} · {text}'
+
+
+def table(rows,lang):
+    if lang=='ko': return rows
+    idx={'en':0,'zh':1,'ja':2}[lang]
+    return [{COLUMNS.get(key,(key,key,key))[idx]:(item_label(value,lang) if key=='name' else tr(value,lang)) for key,value in row.items()} for row in rows]
+
+
+class LocalizedUI:
+    """Translate interface labels while keeping widget values and rule keys unchanged."""
+    TEXT_METHODS={'title','subheader','header','caption','info','warning','error','success','markdown','write','button','download_button','text_input','text_area','file_uploader','number_input','checkbox','toggle','expander','chat_input','form_submit_button','metric','progress','link_button'}
+    def __init__(self,ui,lang): self.ui,self.lang=ui,lang
+    def __getattr__(self,name):
+        attr=getattr(self.ui,name)
+        if name=='sidebar': return LocalizedUI(attr,self.lang)
+        if name in {'selectbox','multiselect','radio'}:
+            def widget(label,options,*args,**kwargs):
+                kwargs.setdefault('format_func',lambda value:item_label(value,self.lang))
+                return attr(tr(label,self.lang),options,*args,**kwargs)
+            return widget
+        if name in self.TEXT_METHODS:
+            def call(*args,**kwargs):
+                if args and isinstance(args[0],str): args=(tr(args[0],self.lang),)+args[1:]
+                for key in ['help','placeholder','text']:
+                    if key in kwargs: kwargs[key]=tr(kwargs[key],self.lang)
+                return attr(*args,**kwargs)
+            return call
+        return attr
+
+MESSAGES.update({
+'추천 질문':('Suggested question','推荐问题','おすすめの質問'),
+'선택한 질문 보내기':('Ask selected question','发送所选问题','選択した質問を送信'),
+'졸업인증 총점':('Total certification points','毕业认证总分','卒業認証の合計点'),
+'학과활동 기준':('Department activity requirements','院系活动要求','学科活動の基準'),
+'코딩역량인증제 조건':('Coding certification requirements','编程能力认证要求','コーディング認証の要件'),
+'자격증 인정 점수':('Certificate recognition points','资格证书认定分数','資格の認定点数'),
+'예: AI·빅데이터학과 2022학번 졸업인증 총점은?':('Example: What are the graduation requirements for 2022?','例如：2022级毕业认证要求是什么？','例：2022年の卒業認証要件を教えてください'),
+'진단 실행 시 입력과 결과를 내 앱 계정에 저장합니다.':('Running a check saves your inputs and result to your app account.','运行诊断时，将输入和结果保存至您的应用账户。','診断を実行すると入力と結果をアカウントに保存します。'),
+'저장된 수강 파일의 이수 과목을 사용합니다.':('Using the completed courses from your saved file.','正在使用已保存文件中的已修课程。','保存したファイルの修得済み科目を使用しています。'),
+'저장된 업로드 과목 비우기':('Clear saved uploaded courses','清空已保存的上传课程','保存したアップロード科目を消去'),
+'저장한 입력과 결과는 내 앱 계정으로 다시 불러옵니다. 채팅은 현재 로그인 세션에서만 유지됩니다.':('Saved inputs and results can be restored with your account. Chats last for the current login session.','保存的输入和结果可通过账户恢复。聊天仅在当前登录会话中保留。','保存した入力と結果はアカウントで復元できます。会話は現在のログイン中のみ保持します。'),
+'과목명은 원문을 확인하세요.':('Check the original Korean course names.','请核对韩文原始课程名。','韓国語の原科目名を確認してください。'),
+'처음에는 무료 모델 다운로드가 필요합니다. 끄면 인터넷 없는 원문 검색을 사용합니다.':('The free model downloads on first use. Turn this off for offline source search.','首次使用需下载免费模型。关闭后使用离线原文检索。','初回は無料モデルをダウンロードします。オフにするとオフライン原文検索を使います。'),
+'벡터 인덱스 준비 중…':('Preparing vector index…','正在准备向量索引…','ベクトル索引を準備中…'),
+'새 PDF는 검색에 반영됩니다. 진단 규칙은 원문 검수 후 JSON에 반영해야 합니다.':('New PDFs become searchable. Diagnosis rules need separate source review and JSON updates.','新PDF将加入检索。诊断规则需人工审核原文后更新JSON。','追加PDFは検索に反映されます。診断ルールは原文確認後にJSONへ別途登録します。'),
+'띄어쓰기와 유니코드 정규화만 적용합니다. 다른 이름은 자동 인정하지 않습니다. 대학공통 항목은 공식 이수 여부로 체크하세요.':('Only spacing and Unicode normalization are applied. Different course names are not automatically recognized. Check university-common items against official completion records.','仅统一空格和Unicode，不自动认定不同课程名。大学共同项目请按正式修读记录勾选。','空白とUnicodeのみ正規化します。異なる科目名は自動認定しません。大学共通項目は正式な修得記録を確認してください。'),
+'다른 값이 보이면 입력하세요. PDF 규칙을 덮어쓰지 않고 차이를 표시합니다.':('Enter different requirements shown in the university system. Differences are displayed without replacing PDF rules.','如教务系统要求不同，请输入。只显示差异，不覆盖PDF规则。','学務システムに異なる必要点数があれば入力してください。PDFルールを変更せず差を表示します。'),
+'권장 자격증은 6점. 대회별 배점은 PDF에 없어 공식 인정 점수가 필요합니다. 참가·수상 중복 합산은 하지 않습니다.':('A recommended certificate earns 6 points. Competition-specific scores require official confirmation; participation and award points are not added together.','推荐资格证书为6分。各竞赛分数需正式确认，不重复累加参加与获奖分数。','推奨資格は6点です。大会別点数は正式な確認が必要です。参加と入賞の点数は重複合算しません。'),
+'자율활동의 인재상별 공식 인정 점수 미확인':('Official points by competency category not confirmed','尚未确认各能力领域的正式认定分数','能力分野別の正式点数が未確認'),
+'자율활동의 인재상별 공식 인정 점수만 입력하세요.':('Enter only officially recognized points for each category.','仅输入各领域正式认定分数。','分野ごとの正式認定点数のみ入力してください。'),
+'PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요.':('The PDF has no per-activity scoring table. Enter the official points for this category shown in the university system.','PDF没有各活动分值表，请输入教务系统显示的本领域正式认定分数。','PDFには活動別配点がありません。学務システムの該当分野の正式点数を入力してください。'),
+'PDF에 개별 과목명이 없습니다. 수강 과목명과 해당 중핵교양 영역의 공식 이수 확인이 필요합니다.':('Individual course names are absent from the PDF. Provide the completed course and confirm its official core-category classification.','PDF未列具体课程名，请输入已修课程并确认其正式核心通识领域。','PDFに個別科目名はありません。修得科目名と正式な中核教養分野の確認が必要です。'),
+'학과사무실: 041-530-1667 · 미디어랩스관 ML202':('Department office: 041-530-1667 · Media Labs ML202','院系办公室：041-530-1667 · Media Labs ML202','学科事務室：041-530-1667 · Media Labs ML202'),
+'홈페이지 교육과정의 교과 학점은 PDF의 졸업인증 점수와 별개입니다. 적용 학번과 최신 확정 기준은 학과에 확인하세요.':('Website curriculum credits are separate from PDF certification points. Confirm your cohort and current final rules with the department.','官网课程学分与PDF认证分数不同，请向院系确认适用年级及最新正式标准。','ホームページの単位とPDFの認証点数は別です。適用年度と最新確定基準は学科に確認してください。'),
+'2022학번 참고: 제공 PDF는 졸업필수활동 15점을 대학공통에, 제공된 개인 학사화면은 학과 졸업필수활동에 표시합니다. 자율활동 분류도 다릅니다. 이는 제공된 화면의 대조이며 모든 학생에게 적용되는 공식 변경 규정은 아닙니다.':('2022 cohort example: the supplied PDF lists 15 mandatory-graduation-activity points under university common, while the personal screenshot groups them under the department. Autonomous-activity categories also differ. This screenshot comparison is not a new university rule.','2022级示例：提供的PDF将毕业必修活动15分列入大学共同，个人教务截图列入院系，且自主活动分类也不同。这只是所提供截图的对照，不是新的正式规定。','2022年度入学の例：PDFは卒業必須活動15点を大学共通に、提供された個人画面は学科側に分類しています。自主活動の分類も異なります。画面の比較であり新しい正式規程ではありません。'),
+'이 앱은 PDF 기준으로 계산합니다. 화면의 점수나 이수 이력은 자동 입력하지 않습니다. 차이가 있으면 진단 메뉴의 학사시스템 비교에 입력하고 학과에 확인하세요.':('Calculations follow the PDF. Screenshot points and records are not prefilled. Enter differences in the comparison panel and ask the department.','本应用按PDF计算，不预填截图分数或记录。如有差异，请在比较面板输入并向院系确认。','PDF基準で計算し、画面の点数や履歴は事前入力しません。相違は比較欄に入力し学科に確認してください。'),
+'공식 홈페이지 확인일: 2026-11-05. 홈페이지 내용은 참고 링크이며 PDF 단독 검색 근거에는 포함하지 않습니다.':('Official website checked: 2026-11-05. Links are references and are excluded from PDF-only retrieval.','官网查看日期：2026-11-05。网页仅供参考，不纳入单一PDF检索依据。','公式サイト確認日：2026-11-05。参考リンクでありPDF単独検索には含めません。'),
+})
+
+GLOSSARY.update({
+'데이터아키텍처전문가':('Data Architecture Professional','数据架构专家','データアーキテクチャ専門家'),
+'SQL전문가':('SQL Professional','SQL专家','SQL専門家'),
+'SQL개발자':('SQL Developer','SQL开发者','SQL開発者'),
+'데이터분석전문가':('Data Analysis Professional','数据分析专家','データ分析専門家'),
+'데이터분석준전문가':('Associate Data Analyst','数据分析准专家','データ分析準専門家'),
+'빅데이터분석기사':('Big Data Analysis Engineer','大数据分析工程师','ビッグデータ分析技師'),
+'다면적 졸업인증: ':('Certification: ','多维毕业认证：','多面的卒業認証：'),
+'최소 기준':('Minimum requirement','最低标准','最低基準'),
+'공식 이수 내역 없음':('No official completion record','无正式修读记录','正式な修得記録なし'),
+'학사시스템 인정 점수에 대한 사용자 확인 기준':('Based on user-confirmed official university-system points','依据用户确认的教务系统正式分数','利用者が確認した学務システムの正式点数に基づく'),
+'공식 영역 이수 확인: ':('Official category completion confirmed: ','已确认正式领域修读：','正式分野の修得確認：'),
+'중핵교양 영역 확인과 이수 과목명 필요':('Provide a completed course and confirm its core category','需提供已修课程并确认核心通识领域','修得科目名と中核教養分野の確認が必要'),
+'원문만으로 세부 인정 기준 판단 불가':('Detailed recognition rules cannot be determined from the source alone','仅凭原文无法确定详细认定规则','原文だけでは詳細な認定基準を判断できません'),
+'입력 정보 확인 필요':('Input information needs review','输入信息需确认','入力情報の確認が必要'),
+'입력 또는 공식 인정 내역을 확인하세요.':('Check your inputs or official recognition record.','请确认输入或正式认定记录。','入力または正式な認定記録を確認してください。'),
+'필수 교과 이수 필요':('Required course must be completed','需完成必修课程','必修科目の修得が必要'),
+'회(학기) 추가 필요':('additional participation(s)/semester(s) needed','还需参加次数／学期数','回・学期の追加が必要'),
+'최소 레벨 또는 점수':('Minimum level or score','最低等级或分数','最低レベルまたは点数'),
+'문서 근거 검색 결과':('Source-backed search results','基于文档依据的检索结果','文書根拠による検索結果'),
+'적용':('Applies to','适用','適用'),
+'교과 이수학점이 아닌 졸업인증 점수입니다.':('These are graduation-certification points, not course credits.','这是毕业认证分数，不是课程学分。','卒業認証点数であり、履修単位ではありません。'),
+'권장 자격증 취득 6점: ':('Recommended certificate: 6 points. ','取得推荐资格证书：6分。','推奨資格取得：6点。'),
+'문서 간 총점 불일치 발견: ':('Conflicting document totals: ','发现文档总分冲突：','文書間の合計点の不一致：'),
+'나의 졸업인증':('My certification','我的毕业认证','自分の卒業認証'),
+'졸업인증':('Graduation certification','毕业认证','卒業認証'),
+'공통':('Common','共同','共通'),'인증':('Certification','认证','認証'),
+'영역':('Category','领域','分野'),'인재상':('Competency','能力','能力'),
+'학기당':('per semester','每学期','学期あたり'),'회당':('per participation','每次','1回あたり'),
+'검색 가능':('searchable','可检索','検索可能'),
+})
+
+MESSAGES.update({
+'접속 유형':('Access type','访问类型','利用区分'),
+'학생':('Student','学生','学生'),
+'교수·평가자':('Instructor / Evaluator','教师／评估者','教員・評価者'),
+'교수·평가자 (과제 확인용)':('Instructor / Evaluator (assignment review)','教师／评估者（作业评审）','教員・評価者（課題確認用）'),
+'평가용 아이디':('Evaluator username','评估用用户名','評価用ユーザー名'),
+'검토할 입학연도':('Cohort to review','待评估入学年份','確認する入学年度'),
+'학번 없이 평가용 아이디로 가입합니다. 교수 신분을 인증하거나 학생 기록을 열람하는 계정은 아닙니다.':('Register with an evaluator username; no student ID required. This does not verify instructor identity or grant access to student records.','使用评估用户名注册，无需学号。不验证教师身份，也不授予学生记录访问权。','学籍番号なしで評価用IDを登録できます。教員の本人認証や学生記録の閲覧権限はありません。'),
+'아이디 또는 비밀번호가 올바르지 않습니다.':('Incorrect username or password.','用户名或密码不正确。','ユーザー名またはパスワードが正しくありません。'),
+'계정을 만들었습니다. 왼쪽 로그인 입력란에서 로그인해 주세요.':('Account created. Sign in using the form on the left.','账户已创建，请在左侧登录。','アカウントを作成しました。左のフォームでログインしてください。'),
+'이미 등록된 평가용 아이디입니다.':('Evaluator username already registered.','评估用户名已注册。','この評価用IDは登録済みです。'),
+'평가용 아이디는 영문으로 시작하는 4~40자 영문·숫자·밑줄·점·하이픈으로 입력하세요.':('Use 4–40 characters starting with a letter: letters, numbers, underscore, dot or hyphen.','用户名须以英文字母开头，长度4至40，可用字母、数字、下划线、点或连字符。','英字で始まる4～40文字で、英数字・下線・点・ハイフンを使用してください。'),
+'교수용 과제 평가':('Assignment evaluation','作业评估','教員用課題評価'),
+'가상 평가 사례':('Synthetic evaluation case','虚拟评估案例','架空の評価ケース'),
+'가상 사례 실행':('Run synthetic case','运行虚拟案例','架空ケースを実行'),
+'빈 기록':('Empty record','空白记录','空の記録'),
+'일부 과목만 이수':('Only some courses completed','仅完成部分课程','一部の科目のみ修得'),
+'확인 가능한 조건 충족':('All verifiable conditions met','满足全部可确认条件','確認可能な条件を充足'),
+'필수 과목 누락':('Missing required course','缺少必修课程','必修科目が不足'),
+'자율활동 점수 부족':('Insufficient autonomous-activity points','自主活动分数不足','自主活動の点数が不足'),
+'이수 정보 미확인':('Unconfirmed completion records','修读信息未确认','修得情報が未確認'),
+'이 화면은 가상 사례를 이용한 과제 확인용입니다. 실제 학생의 개인 기록을 불러오거나 저장하지 않습니다.':('This assignment-review page uses synthetic cases. It neither loads nor saves real student records.','此作业评审页面使用虚拟案例，不读取或保存真实学生记录。','課題確認用の架空ケースです。実際の学生記録を読み込み・保存しません。'),
+'PDF 단독 RAG 메뉴에서 직접 질문하거나 아래 가상 사례로 영역별 판정을 확인하세요.':('Ask questions in PDF-only chat or inspect category decisions with the cases below.','可在单一PDF问答中提问，或用以下案例查看各领域判定。','PDF単独チャットで質問するか、以下のケースで分野別判定を確認してください。'),
+'가상 결과는 학생별 저장 기록이나 실제 졸업 판정에 반영되지 않습니다.':('Synthetic results do not affect saved student records or actual graduation decisions.','虚拟结果不影响学生保存记录或实际毕业判定。','架空の結果は学生の保存記録や実際の卒業判定に反映されません。'),
+})
+
+MESSAGES.update({
+'학과·졸업 통합 상담':('Department and graduation advisor','院系与毕业综合咨询','学科・卒業総合相談'),
+'학과·졸업 통합':('Department and graduation sources','院系与毕业综合资料','学科・卒業総合資料'),
+'근거 원문 보기':('View original evidence','查看原文依据','原文の根拠を表示'),
+'자유롭게 질문하세요. 학과·학번에 맞는 근거를 찾고, 자료에 없는 내용은 필요한 확인 자료를 안내합니다.':('Ask in your own words. Answers use department/cohort evidence and explain missing sources.','请自由提问。回答依据院系及入学年份资料，缺少信息时说明需确认的材料。','自由な表現で質問できます。学科・入学年度の根拠を使い、不足する資料を案内します。'),
+'현재 근거: 졸업인증 PDF + 확인한 학과 홈페이지 교육과정·연락처. 전체 졸업학점 확정 규정은 미제공입니다.':('Sources: certification PDF plus reviewed department curriculum/contact pages. Final graduation-credit regulations are not supplied.','依据：毕业认证PDF及已核对的院系课程和联系方式。尚缺最终毕业学分规定。','根拠：卒業認証PDFと確認済み学科教育課程・連絡先。卒業単位の確定規程は未提供です。'),
+})

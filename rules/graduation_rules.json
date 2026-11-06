@@ -1,0 +1,1720 @@
+{
+  "schema_version": 1,
+  "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+  "profiles": [
+    {
+      "department": "컴퓨터소프트웨어공학과",
+      "years": [
+        2016,
+        2020
+      ],
+      "page": 1,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 25,
+        "비교과지정": 14,
+        "비교과미지정": 6
+      },
+      "items": [
+        {
+          "name": "캡스톤디자인1",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "캡스톤디자인2",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어1~4 중 택3",
+          "points": 15,
+          "area": "교과",
+          "kind": "choice",
+          "options": [
+            "전공영어1",
+            "전공영어2",
+            "전공영어3",
+            "전공영어4"
+          ],
+          "count": 3
+        },
+        {
+          "name": "전공상담",
+          "points": 4,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "학술제발표",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "학과활동(자율)",
+          "points": 6,
+          "area": "비교과미지정",
+          "kind": "count",
+          "per": 1
+        }
+      ],
+      "notes": [
+        "전공영어 대체과목은 원문 각주에 있으나 조합별 인정은 학과 확인 필요"
+      ]
+    },
+    {
+      "department": "컴퓨터소프트웨어공학과",
+      "years": [
+        2021,
+        2021
+      ],
+      "page": 1,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 25,
+        "비교과지정": 15,
+        "비교과미지정": 5
+      },
+      "items": [
+        {
+          "name": "캡스톤디자인1",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "캡스톤디자인2",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어1~4 중 택3",
+          "points": 15,
+          "area": "교과",
+          "kind": "choice",
+          "options": [
+            "전공영어1",
+            "전공영어2",
+            "전공영어3",
+            "전공영어4"
+          ],
+          "count": 3
+        },
+        {
+          "name": "전공상담",
+          "points": 4,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "학술제발표",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "4학년 간담회 참석",
+          "points": 1,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "학과활동(자율)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "count",
+          "per": 1
+        }
+      ],
+      "notes": [
+        "전공영어 대체과목은 원문 각주에 있으나 조합별 인정은 학과 확인 필요"
+      ]
+    },
+    {
+      "department": "컴퓨터소프트웨어공학과",
+      "years": [
+        2022,
+        2024
+      ],
+      "page": 2,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 25,
+        "비교과지정": 24,
+        "비교과미지정": 10
+      },
+      "items": [
+        {
+          "name": "캡스톤디자인",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "산학캡스톤디자인",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어기초",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어응용",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공상담",
+          "points": 4,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "학술제발표",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "TOPCIT 응시(자율)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "count",
+          "per": 1
+        }
+      ],
+      "notes": []
+    },
+    {
+      "department": "컴퓨터소프트웨어공학과",
+      "years": [
+        2025,
+        2026
+      ],
+      "page": 2,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 25,
+        "비교과지정": 24,
+        "비교과미지정": 10
+      },
+      "items": [
+        {
+          "name": "캡스톤디자인",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "산학캡스톤디자인",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어기초",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어응용",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공상담",
+          "points": 4,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "학술제발표",
+          "points": 6,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "학과MT참여",
+          "points": 4,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 2
+        },
+        {
+          "name": "TOPCIT 응시(자율)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "count",
+          "per": 1
+        }
+      ],
+      "notes": []
+    },
+    {
+      "department": "정보보호학과",
+      "years": [
+        2016,
+        2021
+      ],
+      "page": 3,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 15,
+        "비교과지정": 20,
+        "비교과미지정": 5
+      },
+      "items": [
+        {
+          "name": "전공영어기초",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어응용",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "캡스톤디자인3~4 택1",
+          "points": 5,
+          "area": "교과",
+          "kind": "choice",
+          "options": [
+            "캡스톤디자인3",
+            "캡스톤디자인4"
+          ]
+        },
+        {
+          "name": "학과활동",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "(단과대)학술제발표",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        }
+      ],
+      "notes": [
+        "2016~2021 전공영어 대체 인정은 학과 확인 필요"
+      ]
+    },
+    {
+      "department": "정보보호학과",
+      "years": [
+        2022,
+        2022
+      ],
+      "page": 3,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 25,
+        "비교과지정": 30,
+        "비교과미지정": 10
+      },
+      "items": [
+        {
+          "name": "전공영어기초",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어응용",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "C프로그래밍",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "산학캡스톤디자인2 또는 졸업논문프로젝트2",
+          "points": 5,
+          "area": "교과",
+          "kind": "choice",
+          "options": [
+            "산학캡스톤디자인2",
+            "졸업논문프로젝트2"
+          ]
+        },
+        {
+          "name": "학과활동",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "(단과대)학술제발표",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "코딩역량인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "학과학술동아리(학기)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "count",
+          "per": 3
+        }
+      ],
+      "notes": []
+    },
+    {
+      "department": "정보보호학과",
+      "years": [
+        2023,
+        2026
+      ],
+      "page": 3,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 25,
+        "비교과지정": 30,
+        "비교과미지정": 10
+      },
+      "items": [
+        {
+          "name": "전공영어기초",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어응용",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "C프로그래밍",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "산학캡스톤디자인2 또는 졸업논문프로젝트2",
+          "points": 5,
+          "area": "교과",
+          "kind": "choice",
+          "options": [
+            "산학캡스톤디자인2",
+            "졸업논문프로젝트2"
+          ]
+        },
+        {
+          "name": "학과활동",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "(단과대)학술제발표",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "코딩역량인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "TOPCIT 응시",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "학과학술동아리(학기)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "count",
+          "per": 3
+        }
+      ],
+      "notes": []
+    },
+    {
+      "department": "의료IT공학과",
+      "years": [
+        2021,
+        2021
+      ],
+      "page": 4,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 15,
+        "비교과지정": 6,
+        "비교과미지정": 14
+      },
+      "items": [
+        {
+          "name": "의학용어",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "현대응용영어",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "프레젠테이션테크닉",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "학과MT",
+          "points": 1,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "학술제참여",
+          "points": 1,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "전공관련국제박람회",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "진로(취업)지도관련 학내프로그램 참여",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "비교과자율활동(공감)",
+          "points": 7,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 7,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        }
+      ],
+      "notes": [
+        "자율활동은 인재상별 배분 및 중복인정 확인 필요"
+      ]
+    },
+    {
+      "department": "의료IT공학과",
+      "years": [
+        2022,
+        2023
+      ],
+      "page": 4,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 15,
+        "비교과지정": 13,
+        "비교과미지정": 15
+      },
+      "items": [
+        {
+          "name": "의학용어",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "현대응용영어",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "컴퓨팅적사고와문제해결",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "MT참여",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "학술제참여",
+          "points": 1,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 200
+        },
+        {
+          "name": "비교과자율활동(공감)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "전공관련국제박람회(자율)",
+          "points": 2,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "학술제작품발표(단과대)",
+          "points": 2,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "맛있는SW",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        }
+      ],
+      "notes": [
+        "자율활동은 인재상별 배분 및 중복인정 확인 필요"
+      ]
+    },
+    {
+      "department": "의료IT공학과",
+      "years": [
+        2024,
+        2026
+      ],
+      "page": 4,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 15,
+        "비교과지정": 14,
+        "비교과미지정": 15
+      },
+      "items": [
+        {
+          "name": "의학용어",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "현대응용영어",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "컴퓨터코딩과문제해결",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "MT참여",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "학술제참여",
+          "points": 1,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 200
+        },
+        {
+          "name": "TOPCIT 수준1 달성",
+          "points": 1,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 1
+        },
+        {
+          "name": "비교과자율활동(공감)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "전공관련국제박람회(자율)",
+          "points": 2,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "학술제작품발표(단과대)",
+          "points": 2,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "맛있는SW",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        }
+      ],
+      "notes": [
+        "자율활동은 인재상별 배분 및 중복인정 확인 필요"
+      ]
+    },
+    {
+      "department": "AI·빅데이터학과",
+      "years": [
+        2019,
+        2021
+      ],
+      "page": 5,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 5,
+        "비교과지정": 11,
+        "비교과미지정": 19
+      },
+      "items": [
+        {
+          "name": "중핵교양 국제사회언어영역 택1",
+          "points": 5,
+          "area": "교과",
+          "kind": "official_course",
+          "help": "PDF에 개별 과목명이 없습니다. 수강 과목명과 해당 중핵교양 영역의 공식 이수 확인이 필요합니다."
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "자격증/경진대회참가/경진대회수상",
+          "points": 6,
+          "area": "비교과지정",
+          "kind": "achievement",
+          "certificates": [
+            "데이터아키텍처전문가",
+            "SQL전문가",
+            "SQL개발자",
+            "데이터분석전문가",
+            "데이터분석준전문가",
+            "빅데이터분석기사"
+          ],
+          "participation_range": [
+            3,
+            10
+          ],
+          "award_range": [
+            10,
+            30
+          ]
+        },
+        {
+          "name": "비교과자율활동(공감)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        },
+        {
+          "name": "비교과자율활동(창의)",
+          "points": 4,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "department": "AI·빅데이터학과",
+      "years": [
+        2022,
+        2022
+      ],
+      "page": 5,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 10,
+        "비교과지정": 21,
+        "비교과미지정": 19
+      },
+      "items": [
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "중핵교양 국제사회언어영역 택1",
+          "points": 5,
+          "area": "교과",
+          "kind": "official_course",
+          "help": "PDF에 개별 과목명이 없습니다. 수강 과목명과 해당 중핵교양 영역의 공식 이수 확인이 필요합니다."
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "자격증/경진대회참가/경진대회수상",
+          "points": 6,
+          "area": "비교과지정",
+          "kind": "achievement",
+          "certificates": [
+            "데이터아키텍처전문가",
+            "SQL전문가",
+            "SQL개발자",
+            "데이터분석전문가",
+            "데이터분석준전문가",
+            "빅데이터분석기사"
+          ],
+          "participation_range": [
+            3,
+            10
+          ],
+          "award_range": [
+            10,
+            30
+          ]
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "비교과자율활동(공감)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        },
+        {
+          "name": "비교과자율활동(창의)",
+          "points": 4,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "department": "AI·빅데이터학과",
+      "years": [
+        2023,
+        2026
+      ],
+      "page": 5,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 5,
+        "비교과지정": 26,
+        "비교과미지정": 19
+      },
+      "items": [
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "자격증/경진대회참가/경진대회수상",
+          "points": 6,
+          "area": "비교과지정",
+          "kind": "achievement",
+          "certificates": [
+            "데이터아키텍처전문가",
+            "SQL전문가",
+            "SQL개발자",
+            "데이터분석전문가",
+            "데이터분석준전문가",
+            "빅데이터분석기사"
+          ],
+          "participation_range": [
+            3,
+            10
+          ],
+          "award_range": [
+            10,
+            30
+          ]
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "TOPCIT 응시",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "비교과자율활동(공감)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        },
+        {
+          "name": "비교과자율활동(창의)",
+          "points": 4,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "official_points",
+          "help": "PDF에는 활동별 배점이 없습니다. 학사시스템에 표시된 해당 인재상의 공식 인정 점수만 입력하세요."
+        }
+      ],
+      "notes": []
+    },
+    {
+      "department": "사물인터넷학과",
+      "years": [
+        2017,
+        2018
+      ],
+      "page": 6,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 10,
+        "비교과지정": 10,
+        "비교과미지정": 15
+      },
+      "items": [
+        {
+          "name": "캡스톤디자인 2과목 이상",
+          "points": 10,
+          "area": "교과",
+          "kind": "unknown"
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "지도교수상담",
+          "points": 3,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "졸업상담",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 15,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        }
+      ],
+      "notes": [
+        "공인어학 점수별 인정·자율활동 중복 및 인재상 배분 확인 필요"
+      ]
+    },
+    {
+      "department": "사물인터넷학과",
+      "years": [
+        2019,
+        2021
+      ],
+      "page": 6,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 15,
+        "비교과지정": 10,
+        "비교과미지정": 10
+      },
+      "items": [
+        {
+          "name": "캡스톤디자인 2과목 이상",
+          "points": 10,
+          "area": "교과",
+          "kind": "unknown"
+        },
+        {
+          "name": "중핵교양 국제사회언어영역 영어",
+          "points": 5,
+          "area": "교과",
+          "kind": "unknown"
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "지도교수상담",
+          "points": 3,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "졸업상담",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        }
+      ],
+      "notes": [
+        "공인어학 점수별 인정·자율활동 중복 및 인재상 배분 확인 필요"
+      ]
+    },
+    {
+      "department": "사물인터넷학과",
+      "years": [
+        2022,
+        2022
+      ],
+      "page": 6,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 5,
+        "비교과지정": 20,
+        "비교과미지정": 10
+      },
+      "items": [
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "지도교수상담",
+          "points": 3,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "졸업상담",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "맛있는SW",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        }
+      ],
+      "notes": [
+        "공인어학 점수별 인정·자율활동 중복 및 인재상 배분 확인 필요"
+      ]
+    },
+    {
+      "department": "사물인터넷학과",
+      "years": [
+        2023,
+        2023
+      ],
+      "page": 7,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 5,
+        "비교과지정": 21,
+        "비교과미지정": 10
+      },
+      "items": [
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "지도교수상담",
+          "points": 3,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "졸업상담",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "TOPCIT 응시",
+          "points": 1,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "맛있는SW",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        }
+      ],
+      "notes": [
+        "공인어학 점수별 인정·자율활동 중복 및 인재상 배분 확인 필요"
+      ]
+    },
+    {
+      "department": "사물인터넷학과",
+      "years": [
+        2024,
+        2024
+      ],
+      "page": 7,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 5,
+        "비교과지정": 18,
+        "비교과미지정": 13
+      },
+      "items": [
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "지도교수상담",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "TOPCIT 응시",
+          "points": 1,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "맛있는SW",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "정보처리기사응시",
+          "points": 2,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "정보처리기사취득",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "ADsP취득",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "SQLD취득",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        }
+      ],
+      "notes": [
+        "공인어학 점수별 인정·자율활동 중복 및 인재상 배분 확인 필요"
+      ]
+    },
+    {
+      "department": "사물인터넷학과",
+      "years": [
+        2025,
+        2026
+      ],
+      "page": 7,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 5,
+        "비교과지정": 21,
+        "비교과미지정": 13
+      },
+      "items": [
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "학과활동",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "진로및취업상담",
+          "points": 2,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "TOPCIT 응시",
+          "points": 4,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "비교과자율활동(글로벌)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "맛있는SW",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "정보처리기사응시",
+          "points": 2,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "정보처리기사취득",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "ADsP취득",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        },
+        {
+          "name": "SQLD취득",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "check"
+        }
+      ],
+      "notes": [
+        "공인어학 점수별 인정·자율활동 중복 및 인재상 배분 확인 필요"
+      ]
+    },
+    {
+      "department": "메타버스&게임학과",
+      "years": [
+        2023,
+        2025
+      ],
+      "page": 8,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 25,
+        "비교과지정": 30,
+        "비교과미지정": 10
+      },
+      "items": [
+        {
+          "name": "산학캡스톤디자인",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "졸업논문프로젝트",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어기초",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어응용",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공상담",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "(단과대)학술제발표",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "TOPCIT(5) 세부배점",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "unknown"
+        },
+        {
+          "name": "학과활동(자율)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "비교과자율활동(창의)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        }
+      ],
+      "notes": [
+        "TOPCIT 수준별 표와 5점 세부배점표의 적용 관계 및 자율활동 세부인정 확인 필요"
+      ]
+    },
+    {
+      "department": "메타버스&게임학과",
+      "years": [
+        2026,
+        2026
+      ],
+      "page": 8,
+      "source": "2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf",
+      "required": {
+        "대학공통": 45,
+        "교과": 25,
+        "비교과지정": 25,
+        "비교과미지정": 15
+      },
+      "items": [
+        {
+          "name": "산학캡스톤디자인",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "졸업논문프로젝트",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어기초",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공영어응용",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "예비창업설계",
+          "points": 5,
+          "area": "교과",
+          "kind": "course"
+        },
+        {
+          "name": "전공상담",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "(단과대)학술제발표",
+          "points": 10,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "코딩역량인증제 Level2 이상",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "threshold",
+          "minimum": 2
+        },
+        {
+          "name": "AI·SW전공역량졸업인증제",
+          "points": 5,
+          "area": "비교과지정",
+          "kind": "check"
+        },
+        {
+          "name": "학과활동(자율)",
+          "points": 5,
+          "area": "비교과미지정",
+          "kind": "count",
+          "per": 1
+        },
+        {
+          "name": "비교과자율활동(창의)",
+          "points": 10,
+          "area": "비교과미지정",
+          "kind": "unknown"
+        }
+      ],
+      "notes": [
+        "TOPCIT 수준별 표와 5점 세부배점표의 적용 관계 및 자율활동 세부인정 확인 필요"
+      ]
+    }
+  ]
+}
