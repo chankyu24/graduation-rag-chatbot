@@ -13,6 +13,7 @@ colab_demo.ipynb
 data/2026년도 학과기준 디자인 시안(1차 시안-SW융합대학).pdf
 dependency-check.json
 deploy.py
+deployment-check.json
 examples/courses.csv
 published-versions.json
 pytest.ini
@@ -49,6 +50,7 @@ test-results.xml
 tests/test_advisor.py
 tests/test_ai_2022.py
 tests/test_auth.py
+tests/test_corpus_duplicates.py
 tests/test_final_audit.py
 tests/test_graduation_checker.py
 tests/test_grounding.py

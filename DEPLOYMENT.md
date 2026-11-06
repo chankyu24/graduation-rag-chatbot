@@ -1,3 +1,13 @@
+## 2026-11-06 실제 게시 상태
+
+원본 접속 주소: https://graduation-chatbot-production-bbee.up.railway.app
+
+GitHub: https://github.com/chankyu24/graduation-rag-chatbot
+
+초기 Docker 이미지 설치·기동·공개 접속과 교수 입구·PDF 질문·추가 PDF 검색·CSV 진단·95점 사례를 브라우저에서 확인했습니다. CPU 스레드 제한을 적용한 뒤 실제 FAISS 검색과 PDF 5쪽 출처 응답을 확인했습니다. 최신 소스 재배포는 Railway의 저장소 접근 권한 오류로 보류 상태입니다. 초기 게시 버전과 최신 검증 소스는 deployment-check.json에서 구분합니다.
+
+Railway의 현행 설정 화면에는 Config-as-code가 신규 서비스에서 지원되지 않는다고 표시되었습니다. railway.json은 참고용이며, 실제 healthcheck와 재시작 정책은 연결 도구로 직접 설정했습니다. 파일이 있다는 이유만으로 서버에 적용되었다고 간주하지 않습니다.
+
 # 교수님이 실제 원본 챗봇을 확인하는 방법
 
 ## 구현과 공개 상태 구분
