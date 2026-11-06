@@ -55,7 +55,9 @@ tests/test_final_audit.py
 tests/test_graduation_checker.py
 tests/test_grounding.py
 tests/test_improvements.py
+tests/test_language_switch_state.py
 tests/test_languages.py
+tests/test_multilingual_upgrade.py
 tests/test_professor_guest.py
 tests/test_rag.py
 tests/test_rag_audit2.py
@@ -63,6 +65,7 @@ tests/test_roles.py
 tests/test_scoring_audit2.py
 tests/test_source_table.py
 tests/test_ui.py
+tests/test_ui_translation_upgrade.py
 tests/test_uploads.py
 tests/test_vector.py
 tests/test_xlsx.py

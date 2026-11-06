@@ -19,7 +19,7 @@ from src.text_splitter import split_documents
 from src.vector_store import fingerprint,build_store,load_store
 load_dotenv(ROOT/'.env')
 raw_st.set_page_config(page_title='순천향대 졸업 길잡이',page_icon='🎓',layout='wide')
-lang=raw_st.selectbox('언어 / Language',list(LANGUAGES),format_func=lambda code:LANGUAGES[code],key='ui_language')
+lang=raw_st.selectbox('언어 / Language / 语言 / 言語',list(LANGUAGES),format_func=lambda code:LANGUAGES[code],key='ui_language')
 st=LocalizedUI(raw_st,lang)
 st.markdown('<style>.stApp{background:#f5f7fc} h1,h2,h3{color:#183769} div.stButton>button{border-radius:10px} [data-testid=stForm]{background:white;border-radius:16px;padding:24px} [data-testid=stMetric]{background:white;border-radius:12px;padding:14px}</style>',unsafe_allow_html=True)
 st.title('🎓 순천향대 졸업 길잡이')
@@ -35,16 +35,16 @@ if user['role']=='evaluator': menus.insert(0,'교수용 과제 평가')
 menu=st.sidebar.radio('메뉴',menus,key='main_menu')
 st.sidebar.selectbox('대학교',['순천향대학교'])
 st.sidebar.caption('교육과정: 제공된 2026년도 학과기준 시안')
-department=st.sidebar.selectbox('학과',departments,index=departments.index(user['department']))
-year=st.sidebar.number_input('입학연도 (학번 앞 4자리)' if user['role']=='student' else '검토할 입학연도',2000,2100,user['admission_year'])
+department=st.sidebar.selectbox('학과',departments,index=departments.index(user['department']),key='selected_department')
+year=st.sidebar.number_input('입학연도 (학번 앞 4자리)' if user['role']=='student' else '검토할 입학연도',2000,2100,user['admission_year'],key='selected_admission_year')
 st.sidebar.caption('인증점수 ≠ 교과 이수학점')
 original_pdf=DATA/load_rules()['source']
 if original_pdf.is_file():
  st.sidebar.download_button('제공 PDF 다운로드',original_pdf.read_bytes(),original_pdf.name,mime='application/pdf',key='download_original_pdf')
 mode='제공 PDF 한 개' if menu=='PDF 단독 RAG' else '학과·졸업 통합' if menu=='학과·졸업 통합 상담' else '여러 PDF 통합'
 st.sidebar.caption('검색 범위: '+mode)
-vector=st.sidebar.toggle('다국어 임베딩 + FAISS',value=os.getenv('RAG_VECTOR_DEFAULT','0')=='1',help='처음에는 무료 모델 다운로드가 필요합니다. 끄면 인터넷 없는 원문 검색을 사용합니다.')
-llm=st.sidebar.toggle('LLM 답변 사용',value=False)
+vector=st.sidebar.toggle('다국어 임베딩 + FAISS',value=os.getenv('RAG_VECTOR_DEFAULT','0')=='1',help='처음에는 무료 모델 다운로드가 필요합니다. 끄면 인터넷 없는 원문 검색을 사용합니다.',key='rag_vector_enabled')
+llm=st.sidebar.toggle('LLM 답변 사용',value=False,key='llm_enabled')
 @st.cache_data
 def read_all(sig,private_path,include_uploads): return load_corpus(DATA,private_path,include_uploads)
 include_uploads=mode!='제공 PDF 한 개'

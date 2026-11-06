@@ -133,7 +133,9 @@ def tr(text,lang='ko'):
     if index is None: return text
     if text in MESSAGES: return MESSAGES[text][index]
     # Single-pass replacement prevents translating inside inserted translations.
-    mapping={key:value[index] for key,value in {**GLOSSARY,**MESSAGES}.items()}
+    # Exact labels such as 학번 mean "Student ID"; inside "2022학번" the
+    # glossary's cohort meaning applies instead.
+    mapping={key:value[index] for key,value in {**MESSAGES,**GLOSSARY}.items()}
     pattern='|'.join(re.escape(key) for key in sorted(mapping,key=len,reverse=True))
     return re.sub(pattern,lambda match:mapping[match.group()],text)
 
@@ -146,26 +148,40 @@ def item_label(text,lang):
 def table(rows,lang):
     if lang=='ko': return rows
     idx={'en':0,'zh':1,'ja':2}[lang]
-    return [{COLUMNS.get(key,(key,key,key))[idx]:(item_label(value,lang) if key=='name' else tr(value,lang)) for key,value in row.items()} for row in rows]
+    return [{COLUMNS.get(key,(key,key,key))[idx]:(item_label(value,lang) if key in {'name','course','department'} else value if key=='source' else tr(value,lang)) for key,value in row.items()} for row in rows]
 
 
 class LocalizedUI:
     """Translate interface labels while keeping widget values and rule keys unchanged."""
-    TEXT_METHODS={'title','subheader','header','caption','info','warning','error','success','markdown','write','button','download_button','text_input','text_area','file_uploader','number_input','checkbox','toggle','expander','chat_input','form_submit_button','metric','progress','link_button'}
+    TEXT_METHODS={'title','subheader','header','caption','info','warning','error','success','markdown','write','button','download_button','text_input','text_area','file_uploader','number_input','checkbox','toggle','expander','chat_input','form_submit_button','metric','progress','link_button','spinner'}
     def __init__(self,ui,lang): self.ui,self.lang=ui,lang
     def __getattr__(self,name):
         attr=getattr(self.ui,name)
         if name=='sidebar': return LocalizedUI(attr,self.lang)
         if name in {'selectbox','multiselect','radio'}:
             def widget(label,options,*args,**kwargs):
-                kwargs.setdefault('format_func',lambda value:item_label(value,self.lang))
+                formatter=kwargs.pop('format_func',str)
+                kwargs['format_func']=lambda value:item_label(formatter(value),self.lang)
+                for key in ['help','placeholder']:
+                    if key in kwargs: kwargs[key]=tr(kwargs[key],self.lang)
                 return attr(tr(label,self.lang),options,*args,**kwargs)
             return widget
+        if name=='text':
+            def text(body,*args,**kwargs):
+                # Chat responses and source text are already localized separately.
+                # Only exact UI notices belong in this path; names/evidence stay intact.
+                return attr(tr(body,self.lang) if isinstance(body,str) and body in MESSAGES else body,*args,**kwargs)
+            return text
         if name in self.TEXT_METHODS:
             def call(*args,**kwargs):
-                if args and isinstance(args[0],str): args=(tr(args[0],self.lang),)+args[1:]
-                for key in ['help','placeholder','text']:
+                if args and isinstance(args[0],str):
+                    label=item_label(args[0],self.lang) if name in {'checkbox','number_input'} and ' · ' in args[0] else tr(args[0],self.lang)
+                    args=(label,)+args[1:]
+                if name=='metric' and len(args)>1 and isinstance(args[1],str):
+                    args=(args[0],tr(args[1],self.lang))+args[2:]
+                for key in ['help','placeholder','text','label']:
                     if key in kwargs: kwargs[key]=tr(kwargs[key],self.lang)
+                if name=='metric' and 'value' in kwargs: kwargs['value']=tr(kwargs['value'],self.lang)
                 return attr(*args,**kwargs)
             return call
         return attr
@@ -264,4 +280,98 @@ MESSAGES.update({
 '근거 원문 보기':('View original evidence','查看原文依据','原文の根拠を表示'),
 '자유롭게 질문하세요. 학과·학번에 맞는 근거를 찾고, 자료에 없는 내용은 필요한 확인 자료를 안내합니다.':('Ask in your own words. Answers use department/cohort evidence and explain missing sources.','请自由提问。回答依据院系及入学年份资料，缺少信息时说明需确认的材料。','自由な表現で質問できます。学科・入学年度の根拠を使い、不足する資料を案内します。'),
 '현재 근거: 졸업인증 PDF + 확인한 학과 홈페이지 교육과정·연락처. 전체 졸업학점 확정 규정은 미제공입니다.':('Sources: certification PDF plus reviewed department curriculum/contact pages. Final graduation-credit regulations are not supplied.','依据：毕业认证PDF及已核对的院系课程和联系方式。尚缺最终毕业学分规定。','根拠：卒業認証PDFと確認済み学科教育課程・連絡先。卒業単位の確定規程は未提供です。'),
+})
+
+# Professor review, current search mode and upload/input validation notices.
+MESSAGES.update({
+'교수님: 가입 없이 실제 챗봇 확인':('Instructor: open the actual chatbot without registering','教师：无需注册，打开实际聊天机器人','教員の方：登録せず実際のチャットボットを確認'),
+'평가용 입구에서도 원본 Python의 PDF 검색·추가 업로드·진단을 사용할 수 있습니다. 학생 기록에 접근하지 않으며 입력은 이 세션에서만 유지됩니다.':('The review entry provides the original Python PDF search, additional uploads and checks. It cannot access student records; inputs remain in this session only.','评审入口也可使用原始Python的PDF检索、追加上传及诊断。不能访问学生记录，输入仅在本次会话中保留。','確認用入口でも元のPythonによるPDF検索・追加アップロード・診断を利用できます。学生記録にはアクセスせず、入力はこのセッション内だけで保持します。'),
+'교수·평가자 · 가입 없는 확인':('Instructor / Evaluator · no registration','教师／评估者 · 无需注册','教員・評価者 · 登録不要'),
+'업로드와 입력은 현재 세션 전용입니다. 체험 종료 시 파일을 정리합니다.':('Uploads and inputs belong to this session only. Files are removed when you end the review.','上传文件和输入仅用于当前会话，结束体验时清理文件。','アップロードと入力は現在のセッション専用です。体験終了時にファイルを削除します。'),
+'체험 종료':('End review','结束体验','体験を終了'),
+'제공 PDF 다운로드':('Download supplied PDF','下载提供的PDF','提供PDFをダウンロード'),
+'제공 PDF는 공통 자료입니다. 추가 업로드는 현재 앱 계정에만 저장되며 다른 계정 검색에 포함되지 않습니다.':('The supplied PDF is shared reference material. Additional uploads belong to the current app account and are excluded from other accounts’ searches.','提供的PDF是公共参考资料。追加上传仅属于当前应用账户，不会出现在其他账户的检索结果中。','提供PDFは共通資料です。追加アップロードは現在のアプリアカウント専用で、他のアカウントの検索には含まれません。'),
+'**1. PDF 질문·답변 / 2. 수강 목록과 활동 입력 / 3. 규칙 기반 진단**':('**1. PDF questions and answers / 2. Course and activity input / 3. Rule-based checks**','**1. PDF问答／2. 输入课程列表及活动／3. 基于规则的诊断**','**1. PDFへの質疑応答 / 2. 履修一覧と活動の入力 / 3. ルールに基づく診断**'),
+'**교수님 확인 순서**\n1. 왼쪽에서 PDF 단독 RAG를 선택해 질문하고 출처를 확인합니다.\n2. 다국어 임베딩 + FAISS를 켜 실제 벡터 검색을 확인합니다.\n3. 다중 문서 RAG에서 별도 PDF를 등록한 뒤 새 문서 내용으로 질문합니다.\n4. 졸업요건 진단에서 수강 CSV/XLSX와 활동을 입력하고 부족한 항목을 확인합니다.':('**Instructor review steps**\n1. Select PDF-only chat on the left, ask a question and check its source.\n2. Enable Multilingual embeddings + FAISS to inspect actual vector retrieval.\n3. Register another PDF in Multiple-document chat and ask about that document.\n4. In Certification check, enter a course CSV/XLSX and activities, then inspect unmet requirements.','**教师确认步骤**\n1. 在左侧选择单一PDF问答，提问并核对出处。\n2. 开启多语言嵌入 + FAISS，确认实际向量检索。\n3. 在多文档问答中登记其他PDF，再提问新文档内容。\n4. 在毕业认证诊断中输入课程CSV/XLSX及活动，查看不足项目。','**教員の確認手順**\n1. 左側でPDF単独チャットを選び、質問と出典を確認します。\n2. 多言語埋め込み + FAISSをオンにして実際のベクトル検索を確認します。\n3. 複数文書チャットで別のPDFを登録し、新しい文書について質問します。\n4. 卒業認証チェックで履修CSV/XLSXと活動を入力し、不足項目を確認します。'),
+'이 화면은 간편 HTML이 아니라 원본 Python 프로그램입니다. API 키 없이 검색·계산을 사용할 수 있으며, 생성형 답변은 별도 API 설정이 필요합니다.':('This is the original Python program, rather than the simplified HTML preview. Search and calculation work without an API key; generated answers require separate API settings.','此页面运行原始Python程序，并非简易HTML预览。检索及计算无需API密钥；生成式回答需另行设置API。','この画面は簡易HTMLではなく元のPythonプログラムです。検索・計算はAPIキーなしで利用でき、生成回答には別途API設定が必要です。'),
+'평가자 계정으로 로그인해 주세요.':('Sign in with an evaluator account.','请使用评估者账户登录。','評価者アカウントでログインしてください。'),
+'체험 입력과 결과는 현재 세션에서만 유지됩니다.':('Review inputs and results remain in this session only.','体验输入和结果仅在当前会话中保留。','体験中の入力と結果は現在のセッション内だけで保持します。'),
+'체험 결과는 현재 세션에서만 유지됩니다.':('Review results remain in this session only.','体验结果仅在当前会话中保留。','体験の結果は現在のセッション内だけで保持します。'),
+'체험 입력과 진단 결과는 현재 세션에서만 유지됩니다.':('Review inputs and check results remain in this session only.','体验输入和诊断结果仅在当前会话中保留。','体験中の入力と診断結果は現在のセッション内だけで保持します。'),
+'다국어 벡터 인덱스 준비 중…':('Preparing multilingual vector index…','正在准备多语言向量索引…','多言語ベクトル索引を準備中…'),
+'요청됨 (API 키·응답 검증 필요)':('Requested (API key and response validation required)','已请求（需要API密钥及回答验证）','要求済み（APIキーと回答検証が必要）'),
+'검수된 기준표·키워드 검색':('Reviewed requirements and keyword search','已审核标准表及关键词检索','確認済み基準表・キーワード検索'),
+'다국어 임베딩·FAISS':('Multilingual embeddings / FAISS','多语言嵌入／FAISS','多言語埋め込み・FAISS'),
+'사용 안 함':('Off','未使用','使用しない'),
+'해당 학과·학번 기준이 없습니다. 문서를 추가해 주세요.':('No requirements are available for this department and cohort. Add the relevant document.','没有该院系及入学年份的标准，请添加相应文档。','該当学科・入学年度の基準がありません。対応する文書を追加してください。'),
+'로그인한 계정이 필요합니다.':('A signed-in account is required.','需要已登录的账户。','ログイン済みのアカウントが必要です。'),
+'PDF는 0바이트 초과 30MB 이하여야 합니다.':('PDF files must be larger than zero bytes and no larger than 30 MB.','PDF须大于0字节且不超过30MB。','PDFは0バイトより大きく30MB以下にしてください。'),
+'PDF 확장자가 필요합니다.':('The file must have a PDF extension.','文件必须使用PDF扩展名。','PDF拡張子が必要です。'),
+'텍스트 없음: OCR 필요':('No extractable text: OCR required','无可提取文本：需要OCR','抽出可能なテキストなし：OCRが必要'),
+'PDF를 읽을 수 없습니다. 파일 손상 여부를 확인하세요.':('Cannot read the PDF. Check whether the file is damaged.','无法读取PDF，请检查文件是否损坏。','PDFを読み取れません。ファイルの破損を確認してください。'),
+'암호화된 PDF는 지원하지 않습니다.':('Encrypted PDFs are not supported.','不支持加密PDF。','暗号化されたPDFには対応していません。'),
+'추출 가능한 텍스트가 없습니다. OCR 처리 후 등록하세요.':('No extractable text was found. Apply OCR before registering the PDF.','未找到可提取文本，请先进行OCR再登记PDF。','抽出できるテキストがありません。OCR処理後に登録してください。'),
+'CSV는 5MB 이하여야 합니다.':('CSV files must be no larger than 5 MB.','CSV不得超过5MB。','CSVは5MB以下にしてください。'),
+'XLSX는 5MB 이하여야 합니다.':('XLSX files must be no larger than 5 MB.','XLSX不得超过5MB。','XLSXは5MB以下にしてください。'),
+'CSV 또는 XLSX 파일만 지원합니다.':('Only CSV and XLSX files are supported.','仅支持CSV和XLSX文件。','CSVまたはXLSXのみに対応しています。'),
+'CSV에 과목명, 이수여부 열이 필요합니다.':('CSV requires the Korean columns 과목명 (course name) and 이수여부 (completion).','CSV需要韩文列名 과목명（课程名）和 이수여부（是否修完）。','CSVには韓国語の列名 과목명（科目名）と 이수여부（修得状況）が必要です。'),
+'CSV 열 이름은 비어 있거나 중복될 수 없습니다. 띄어쓰기만 다른 열도 중복입니다.':('CSV column names must be nonempty and unique. Differences in spacing do not make names distinct.','CSV列名不能为空或重复，仅空格不同也视为重复。','CSVの列名は空欄や重複にできません。空白だけが異なる列名も重複です。'),
+'CSV 따옴표 또는 행 형식이 올바르지 않습니다. CSV 형식으로 다시 저장해 주세요.':('Invalid CSV quoting or row format. Save the file as CSV again.','CSV引号或行格式不正确，请重新保存为CSV。','CSVの引用符または行形式が正しくありません。CSV形式で保存し直してください。'),
+'XLSX 처리에는 openpyxl과 pandas 설치가 필요합니다.':('XLSX processing requires openpyxl and pandas.','处理XLSX需要安装openpyxl和pandas。','XLSXの処理にはopenpyxlとpandasが必要です。'),
+'XLSX 파일을 읽을 수 없습니다. 첫 시트의 양식과 파일 손상을 확인하세요.':('Cannot read the XLSX file. Check the first sheet’s format and file integrity.','无法读取XLSX，请检查首个工作表格式及文件是否损坏。','XLSXを読み取れません。最初のシートの形式とファイルの破損を確認してください。'),
+'압축 해제 크기가 너무 큰 XLSX입니다.':('The XLSX file is too large when decompressed.','XLSX解压后的大小过大。','XLSXの展開後サイズが大きすぎます。'),
+'CSV를 UTF-8 또는 CP949로 저장해 주세요.':('Save the CSV using UTF-8 or CP949.','请使用UTF-8或CP949保存CSV。','CSVをUTF-8またはCP949で保存してください。'),
+'입학연도는 정수로 입력하세요.':('Enter the admission year as an integer.','入学年份须为整数。','入学年度は整数で入力してください。'),
+'수강 과목은 과목명 문자열 목록으로 입력하세요.':('Provide the courses as a list of course-name strings.','课程须以课程名称字符串列表输入。','履修科目は科目名文字列の一覧で入力してください。'),
+'학사시스템 필요 점수는 영역별 사전이어야 합니다.':('University-system requirements must be a category-to-points mapping.','教务系统要求分数须按领域与分数对应输入。','学務システムの必要点数は分野と点数の対応で入力してください。'),
+'활동과 증빙 정보는 이름별 사전이어야 합니다.':('Activities and evidence must be mapped by item name.','活动及证明信息须按项目名称对应输入。','活動と証明情報は項目名ごとの対応で入力してください。'),
+'입력 완료 여부는 참/거짓이어야 합니다.':('Input-complete status must be true or false.','输入完成状态须为真或假。','入力完了の状態は真または偽にしてください。'),
+'해당 학과·학번 기준 없음':('No requirements for this department and cohort','没有该院系及入学年份的标准','該当学科・入学年度の基準がありません'),
+'선택 필수 과목의 유사 명칭이 있습니다. 동일 과목 여부 확인 필요; 자동 인정하지 않음':('A similar required-course name was found. Confirm equivalence; it is not automatically accepted.','发现相似的必修课程名，需确认是否为同一课程，不自动认定。','選択必修科目に似た名称があります。同一科目か確認が必要で、自動認定はしません。'),
+'다른 필수 교과와 동일 과목을 중복 배정할 수 없습니다. 공식 교과 영역 확인 필요':('The same course cannot fill another required-course slot. Confirm its official category.','同一课程不能重复计入另一必修项目，需确认正式课程领域。','同一科目を別の必修項目に重複登録できません。正式な教科分野の確認が必要です。'),
+'목록 외 자격증은 자동 인정하지 않습니다.':('Certificates outside the list are not automatically accepted.','不自动认定列表外资格证书。','リスト外の資格は自動認定しません。'),
+'대회별 배점이 없으므로 공식 인정 점수 확인 필요':('Competition-specific scores are not provided; confirm the officially recognized points.','未提供各竞赛配分，需确认正式认定分数。','大会別配点がないため、正式な認定点数の確認が必要です。'),
+'PDF 권장 자격증 취득 6점':('PDF-recommended certificate obtained: 6 points','取得PDF推荐资格证书：6分','PDF推奨資格の取得：6点'),
+'전공영어 대체과목은 원문 각주에 있으나 조합별 인정은 학과 확인 필요':('Major-English substitutes appear in the source footnotes, but accepted combinations require department confirmation.','原文脚注列有专业英语替代课程，但认可的组合需向院系确认。','専攻英語の代替科目は原文の脚注にありますが、組み合わせの認定は学科への確認が必要です。'),
+'2016~2021 전공영어 대체 인정은 학과 확인 필요':('For 2016–2021 cohorts, major-English substitutions require department confirmation.','2016至2021级的专业英语替代认定需向院系确认。','2016～2021年度入学の専攻英語の代替認定は学科への確認が必要です。'),
+'자율활동은 인재상별 배분 및 중복인정 확인 필요':('Review competency-category allocation and overlapping recognition of autonomous activities.','自主活动需确认能力领域分配及重复认定。','自主活動の能力分野別配分と重複認定を確認する必要があります。'),
+'공인어학 점수별 인정·자율활동 중복 및 인재상 배분 확인 필요':('Review language-score recognition, overlapping autonomous activities and competency-category allocation.','需确认语言考试各分数的认定、自主活动重复认定及能力领域分配。','公認語学の点数別認定、自主活動の重複と能力分野別配分の確認が必要です。'),
+'TOPCIT 수준별 표와 5점 세부배점표의 적용 관계 및 자율활동 세부인정 확인 필요':('Review how the TOPCIT level table relates to the detailed 5-point table, and confirm detailed recognition of autonomous activities.','需确认TOPCIT等级表与5分详细配分表的适用关系及自主活动的具体认定。','TOPCITの水準表と5点の詳細配点表の適用関係、および自主活動の詳細認定を確認する必要があります。'),
+'제공 PDF의 다면적 졸업인증만 진단. 사용자 입력·공식 인정 확인을 전제로 하며 졸업학점과 최종 졸업 확정은 학사시스템에서 확인하세요.':('Only the supplied PDF’s graduation certification is checked, based on user inputs and confirmed official recognition. Confirm graduation credits and final eligibility in the university system.','仅诊断所提供PDF的多维毕业认证，以用户输入和正式认定确认情况为前提。毕业学分和最终毕业资格请在教务系统确认。','提供PDFの多面的卒業認証だけを診断します。利用者の入力と正式認定の確認を前提とし、卒業単位と最終的な卒業可否は学務システムで確認してください。'),
+})
+
+GLOSSARY.update({
+'학번':(' cohort','级','年度入学'),
+'현재 검색: ':('Current search: ','当前检索：','現在の検索：'),
+' / 생성형 답변: ':(' / Generated answers: ','／生成式回答：',' / 生成回答：'),
+'벡터 검색 준비 실패. 원문 검색 사용: ':('Vector search could not start; using source search: ','向量检索准备失败，改用原文检索：','ベクトル検索の準備に失敗しました。原文検索を使用：'),
+'문서 읽기 오류 · ':('Document read error · ','文档读取错误 · ','文書読み取りエラー · '),
+'페이지 검색 가능':('page(s) searchable','页可检索','ページを検索可能'),
+'등록 완료':('Registered','登记完成','登録完了'),
+'학번의 진단 결과가 없습니다. 진단 메뉴에서 내역을 입력해 주세요.':('cohort has no results. Enter records in Certification check.','级暂无诊断结果，请在诊断菜单输入记录。','年度入学の診断結果がありません。診断メニューで記録を入力してください。'),
+' — 세부 기준 확인 필요':(' — Detailed rules need review',' — 需确认详细标准',' — 詳細基準の確認が必要'),
+'의 학교 공식 인정 점수를 확인함':('official university points confirmed','已确认学校正式认定分数','大学の正式な認定点数を確認した'),
+' (없으면 0, 범위 ':(' (0 if none; range ','（无则填0，范围','（該当なしは0、範囲'),
+': 0 이상의 점수를 입력하세요.':(': Enter points of zero or above.', '：请输入不小于0的分数。','：0以上の点数を入力してください。'),
+'행: CSV 열 수가 일치하지 않습니다.':(': CSV column counts do not match.', '行：CSV列数不一致。','行：CSVの列数が一致しません。'),
+'행: 이수여부 값 ':(': completion value ','行：修读状态值','行：修得状況の値'),
+'을 확인하세요.':('needs review.','请确认。','を確認してください。'),
+'행: 과목명이 비어 있습니다.':(': Course name is empty.','行：课程名为空。','行：科目名が空です。'),
+'증빙 정보는 사전이어야 합니다.':('Evidence must be an item mapping.','证明信息须按项目对应输入。','証明情報は項目ごとの対応にしてください。'),
+'자격증은 이름 목록이어야 합니다.':('Certificates must be a list of names.','资格证书须为名称列表。','資格は名称の一覧にしてください。'),
+'이수 과목명은 문자열이어야 합니다.':('The completed course name must be text.','已修课程名须为文本。','修得科目名は文字列にしてください。'),
+'확인 여부는 참/거짓이어야 합니다.':('Confirmation must be true or false.','确认状态须为真或假。','確認の状態は真または偽にしてください。'),
+'0 이상의 유한한 숫자가 필요합니다.':('A finite number of zero or above is required.','需要不小于0的有限数值。','0以上の有限数が必要です。'),
+'정수 횟수가 필요합니다.':('A whole-number count is required.','次数须为整数。','回数は整数にしてください。'),
+'2019학번 이전 대학공통 세부 기준 없음':('University-common details for cohorts before 2019 are unavailable','没有2019级以前的大学共同详细标准','2019年度入学より前の大学共通詳細基準がありません'),
+'유사 과목명 ':('Similar course name: ','相似课程名：','類似科目名：'),
+'의 동일 과목 여부 확인 필요; 자동 인정하지 않음':('requires an equivalence check; not automatically accepted','需确认是否为同一课程，不自动认定','との同一科目の確認が必要。自動認定しません'),
+'와 동일 과목인지 확인 필요; 자동 인정하지 않음':('requires a course-equivalence check; not automatically accepted','需确认是否为同一课程，不自动认定','との同一科目の確認が必要。自動認定しません'),
+'알 수 없는 영역: ':('Unknown category: ','未知领域：','不明な分野：'),
+'세부 규칙 합계가 영역 필요 점수보다 작음':('Detailed-item totals are below the category requirement','详细项目合计低于领域要求分数','詳細項目の合計が分野の必要点数未満です'),
+'기준 차이 확인 필요':('Review the differing requirements','需确认标准差异','基準の相違を確認する必要があります'),
+'입력한 학사시스템 필요 ':('entered university requirement ','输入的教务系统要求','入力した学務システムの必要点数'),
+'인정 점수는 ':('recognized points must be ','认定分数须为','認定点数は'),
+' 범위여야 합니다.':(' within the allowed range.','，并在允许范围内。','の範囲内にしてください。'),
+'이수/인증 여부는 참·거짓 또는 0·1이어야 합니다.':('Completion/certification must be true/false or 0/1.','修读／认证状态须为真／假或0／1。','修得・認証の状態は真・偽または0・1にしてください。'),
 })

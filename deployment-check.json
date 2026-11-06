@@ -2,10 +2,9 @@
   "checked_at": "2026-11-06",
   "live_url": "https://graduation-chatbot-production-bbee.up.railway.app",
   "github_url": "https://github.com/chankyu24/graduation-rag-chatbot",
-  "local_pytest_passed": 181,
+  "local_pytest_passed": 238,
   "local_pytest_failed": 0,
   "deployed_source_commit": "7847c56f92f1b4ec424bf9fa785f63baf30499d7",
-  "latest_source_commit": "b849c9f9d3bda8c0d920ed2ceac12fced55b973e",
   "browser_checks": {
     "professor_guest_entry": "passed",
     "pdf_coding_question_and_page_5_citation": "passed",
@@ -15,11 +14,21 @@
     "guest_exit": "passed",
     "vector_search_on_host": "passed_after_runtime_thread_limits",
     "live_llm_api": "not_run_missing_api_key",
-    "vector_question_95_points_page_5": "passed"
+    "vector_question_95_points_page_5": "passed",
+    "four_language_options_and_english_chinese_japanese_login": "passed_on_existing_cloud_image"
   },
   "latest_source_deploy": "blocked_Railway_repository_access",
   "runtime_thread_limit_redeploy": "SUCCESS",
   "hosting_plan": "Trial observed in dashboard; no paid upgrade performed",
   "runtime_deployment_id": "e54b4b9a-6c75-444f-96e0-4f7de13e9dbb",
-  "linux_container_clean_dependency_install": "passed_for_initial_image"
+  "linux_container_clean_dependency_install": "passed_for_initial_image",
+  "language_enhancement_source": "app.py, src/i18n.py, src/multilingual.py; latest language changes tested in submitted source; cloud deployment pending repository access",
+  "language_checks": {
+    "guest_and_diagnosis_three_languages": "passed_Streamlit_AppTest",
+    "switch_language_preserves_department_cohort_and_session": "passed_Streamlit_AppTest",
+    "offline_topic_answers_and_source_integrity": "passed",
+    "live_api_translation": "not_run_missing_api_key",
+    "new_language_enhancement_on_cloud": "not_deployed_repository_access_denied"
+  },
+  "latest_source_ref": "https://github.com/chankyu24/graduation-rag-chatbot/tree/main"
 }
