@@ -70,7 +70,7 @@ if vector and docs:
   @st.cache_resource(max_entries=2)
   def shared_embeddings(model_name):
    from langchain_huggingface import HuggingFaceEmbeddings
-   return HuggingFaceEmbeddings(model_name=model_name,model_kwargs={'device':'cpu'},encode_kwargs={'normalize_embeddings':True})
+   return HuggingFaceEmbeddings(model_name=model_name,model_kwargs={'device':'cpu'},encode_kwargs={'normalize_embeddings':True,'batch_size':8})
   @st.cache_resource
   def index(sig,scope,private_path):
    from src.embedding import get_embeddings
