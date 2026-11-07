@@ -81,7 +81,24 @@ def short_rule_answer(question,rule,year):
         common=common_items(year)
         if common: return '대학공통 필요 점수는 **45점**입니다. '+', '.join(f"{i['name']} {i['points']}점" for i in common)+'. 항목별 공식 이수 여부를 확인하세요.'
     if '총점' in q or '졸업요건' in q or '졸업인증기준' in q:
-        return f"{rule['department']} {year}학번의 다면적 졸업인증 필요 점수는 **총 {sum(rule['required'].values())}점**입니다. "+', '.join(f'{area} {points}점' for area,points in rule['required'].items())+'. 총점뿐 아니라 필수 과목·활동과 영역별 조건을 모두 충족해야 합니다. 전체 졸업학점 규정은 이 PDF와 별도로 확인해야 합니다.'
+        header=f"{rule['department']} {year}학번의 다면적 졸업인증 필요 점수는 **총 {sum(rule['required'].values())}점**입니다. "+', '.join(f'{area} {points}점' for area,points in rule['required'].items())+'. 총점뿐 아니라 필수 과목·활동과 영역별 조건을 모두 충족해야 합니다. 전체 졸업학점 규정은 이 PDF와 별도로 확인해야 합니다.'
+        if '총점' in q and not re.search(r'요약|정리|필수|조건',q): return header
+        lines=[header,'\n준비할 필수 조건:']
+        for area,required in rule['required'].items():
+            lines.append(f'\n[{area} · 필요 {required}점]')
+            for item in (i for i in items if i['area']==area):
+                kind=item['kind'];detail='학교 공식 이수·인증 완료 필요'
+                if kind=='course': detail='해당 과목 이수 필요'
+                elif kind=='choice': detail=', '.join(item['options'])+f" 중 {item.get('count',1)}개 이수"
+                elif kind=='count': detail=f"회/학기당 {item['per']}점, {ceil(item['points']/item['per'])}회/학기 필요"
+                elif kind=='threshold': detail=f"최소 인증 수준/시험점수 {item['minimum']} 이상"
+                elif kind=='official_course': detail='해당 영역 과목 이수와 학사시스템의 공식 교과 영역 확인 필요'
+                elif kind=='official_points': detail='해당 인재상 영역의 학교 공식 인정 점수로 확인; 다른 영역 점수로 대신 채우지 않음'
+                elif kind=='achievement': detail='권장 자격증('+', '.join(item['certificates'])+') 취득 또는 경진대회 공식 인정 점수 확인; 참가·수상 중복 가산 안 함'
+                elif kind=='unknown': detail='PDF만으로 세부 인정 조건을 확정할 수 없어 확인 필요'
+                lines.append(f"- {item['name']}: {item['points']}점 · {detail}")
+        lines.append('\n나의 충족 여부를 확인하려면 졸업요건 진단 메뉴에서 실제 수강 목록과 활동을 입력하세요. 이 설명만으로 개인 졸업을 확정하지 않습니다.')
+        return '\n'.join(lines)
     named=[item for item in items if normalize(item['name']).lower() in q]
     if named:
         lines=[]
@@ -125,6 +142,8 @@ def website_answer(question,department):
 
 def personal_answer(question,personal_result):
     q=normalize(question)
+    if re.search(r'졸업\s*(?:하려면|할려면)',question) and not re.search(r'더|남|부족|내\s*(?:점수|진단|결과)',question):
+        return None
     if not re.search(r'내(?:진단|점수|결과|부족)|나(?:는|의|도)?졸업|내가졸업|얼마나남|뭐가부족|뭘더해야',q): return None
     if not personal_result:
         return '아직 이 학과·학번의 개인 진단 내역이 없습니다. 졸업요건 진단 메뉴에서 수강 목록과 활동을 입력하고 진단을 실행해 주세요.',[]
@@ -143,7 +162,7 @@ def answer_advisor(question,documents,department,year,store=None,use_llm=False,i
     if len(explicit_departments)>1:
         return '학과를 하나씩 선택하여 질문해 주세요.',[]
     # Academic credits must never be manufactured from certification points.
-    if re.search(r'졸업\s*학점|총\s*학점',question):
+    if re.search(r'졸업\s*학점|총\s*학점|졸업.*학점|학점.*졸업',question):
         return '제공된 자료에는 적용 학번의 전체 졸업학점 기준이 없습니다. 졸업인증 점수와 졸업학점은 다릅니다. 학번별 교육과정 이수기준표 또는 학과의 공식 졸업학점 규정이 필요합니다.',[]
     if personal_result and (personal_result.get('year')!=year or personal_result.get('department')!=department): personal_result=None
     personal=personal_answer(question,personal_result)

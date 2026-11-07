@@ -42,6 +42,15 @@ def normalize_question(question):
     """Normalize document terminology, never discard unsupported subject matter."""
     import unicodedata
     question=unicodedata.normalize('NFC',question)
+    # References to the current document and summary verbs carry intent, not a
+    # new eligibility rule. Keep all unknown subject words for supported().
+    question=re.sub(r'(?<![가-힣])(?:이|저|그|해당|첨부된|제공된)\s*(문서|PDF|자료|파일)',r'\1',question,flags=re.IGNORECASE)
+    if re.search(r'문서|PDF|자료|파일',question,flags=re.IGNORECASE) and re.search(r'요약|정리|핵심|한눈',question):
+        question='졸업요건 '+question
+    question=re.sub(r'나에게|저에게|나한테|저한테|내게|제게',' ',question)
+    question=re.sub(r'졸업(?:은|을)?\s*(?:어떻게|어케)\s*(?:하는지|하는거야|하는건지|하나요|해요|해|하냐)','졸업요건',question)
+    question=re.sub(r'졸업\s*방법','졸업요건',question)
+    question=re.sub(r'(요약|정리|설명)(?:해서|해\s*주세요|해\s*줘|해줄래요?|해봐|해)?',r' \1 ',question)
     # Terminology aliases only; point eligibility still comes exclusively from the PDF.
     # Official K-DATA naming: https://www.dataq.or.kr/www/dataq_brochure_2022.pdf
     for alias, canonical in [('SQLD','SQL개발자'),('ADsP','데이터분석준전문가')]:
@@ -84,6 +93,7 @@ CONVERSATIONAL={
     '이야','예요','에요','해','해요','해줘요','해줄래','대해서','궁금해','궁금해요',
     '해야돼','해야해','해야하나요','해야돼요','해야하는지','하면돼','하면되나요','하면','뭘','뭐','방법','하는법','조건','그럼','그러면','그래서','그리고','그거','그건','이거','저거','그것','이것','차이','비교','둘','각각','둘다','모두','전부','다','어떤게','있어','있어요','있을까','있는지','말해줘','설명좀','채워야해','채워야돼','채우면돼','하냐','어떡해','해야하냐','되냐','돼야해','뭐냐','필요한거','맞아','맞아요',
 }
+CONVERSATIONAL.update({'문서','pdf','PDF','자료','파일','내용','요약','정리','핵심','한눈','전체적으로','위해서','좀','하는지','어케하는지'})
 
 
 def admission_years(question):
