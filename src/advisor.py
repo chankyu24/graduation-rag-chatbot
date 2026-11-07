@@ -180,6 +180,10 @@ def answer_advisor(question,documents,department,year,store=None,use_llm=False,i
     if 1<len(parts)<=3 and all(parts) and len(set(admission_years(question)))<=1:
         sections=[];combined=[];seen=set()
         for n,part in enumerate(parts,1):
+            # A short second clause like "필수 조건 알려줘" inherits the
+            # graduation topic; unknown nouns are never normalized away.
+            if re.fullmatch(r'(?:필수\s*)?(?:조건|기준|점수|총점)\s*(?:알려줘|알려주세요|설명해줘)?[?!.]*',part):
+                part='졸업인증 '+part
             response,hits=answer_advisor(part,documents,department,year,store,use_llm,include_guide,None,personal_result)
             sections.append(f'### 요청 {n}: {part}\n'+response.partition('\n\n근거 원문:\n')[0])
             for hit in hits:
