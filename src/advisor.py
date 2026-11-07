@@ -1,5 +1,6 @@
 """Source-grounded conversational layer; calculation remains outside the LLM."""
 import re
+import os
 from math import ceil
 from .graduation_rules import get_rule,common_items,load_rules
 from .utils import normalize
@@ -29,24 +30,56 @@ def topics(question):
 def resolve_question(question,department,year,previous_question=None):
     question=re.sub(r'(?<!\d)(\d{2})\s*학번',lambda m:'20'+m[1]+'학번',question)
     if previous_question: previous_question=re.sub(r'(?<!\d)(\d{2})\s*학번',lambda m:'20'+m[1]+'학번',previous_question)
+    if previous_question:
+        previous_question=re.sub(r'AI\s*[·ㆍ・.]?\s*빅\s*데이터\s*학과','AI·빅데이터학과',previous_question,flags=re.IGNORECASE)
     if re.search(r'AI\s*[·ㆍ・.]?\s*빅\s*데이터\s*학과',question,flags=re.IGNORECASE):
         department='AI·빅데이터학과'
         question=re.sub(r'AI\s*[·ㆍ・.]?\s*빅\s*데이터\s*학과',department,question,flags=re.IGNORECASE)
     explicit=[name for name in {r['department'] for r in load_rules()['profiles']} if normalize(name) in normalize(question)]
     if len(explicit)==1: department=explicit[0]
     current_years=admission_years(question)
+    followup=bool(previous_question and re.search(r'그럼|그러면|그거|그건|그것|몇\s*점|몇\s*번|몇\s*회|어떻게',question))
+    # Topic changes such as "그럼 코딩은?" retain the last explicit scope too.
+    # The caller can retain this resolved question for the next turn without
+    # changing the user-visible original question or creating global state.
+    if followup:
+        previous_departments=[name for name in {r['department'] for r in load_rules()['profiles']} if normalize(name) in normalize(previous_question)]
+        if not explicit and len(previous_departments)==1: department=previous_departments[0]
+        old_years=admission_years(previous_question)
+        if not current_years and len(set(old_years))==1:
+            question=old_years[0]+'학번 '+question
     if not topics(question) and previous_question and re.search(r'그럼|그거|그건|그것|몇\s*점|몇\s*번|몇\s*회|어떻게',question):
         previous_topics=topics(previous_question)
         if len(previous_topics)==1:
-            previous_departments=[name for name in {r['department'] for r in load_rules()['profiles']} if normalize(name) in normalize(previous_question)]
-            if not explicit and len(previous_departments)==1: department=previous_departments[0]
             question=previous_topics[0]+' '+question
-            if not current_years:
-                old_years=admission_years(previous_question)
-                if len(set(old_years))==1: question=old_years[0]+'학번 '+question
     final_years=admission_years(question)
     if len(set(final_years))==1: year=int(final_years[0])
     return question,department,year
+
+
+def mandatory_consequence(question,rule,year):
+    """Explain a cited mandatory item's consequence, never decide graduation."""
+    q=normalize(question)
+    if not re.search(r'안하면|하지않으면|안해도|미이수|못하면|못해|못하',q): return None
+    items=common_items(year)+rule['items'];selected=[]
+    requested=topics(question)
+    if len(requested)==1:
+        topic=requested[0]
+        if topic=='코딩역량인증제': selected=[i for i in items if '코딩' in i['name']]
+        elif topic=='AI·SW전공역량졸업인증제': selected=[i for i in items if '전공역량졸업인증' in i['name']]
+        elif topic=='학과활동': selected=[i for i in items if i['name']=='학과활동']
+        elif topic=='자격증':
+            selected=[i for i in items if i['kind']=='achievement']
+            if selected:
+                item=selected[0]
+                return f"자격증 취득만이 유일한 충족 경로는 아닙니다. 제공 PDF의 {item['name']}은 {item['points']}점 항목이며, 권장 자격증 또는 경진대회의 공식 인정 점수로 확인합니다. 자격증이 없다는 이유만으로 졸업 불가를 단정할 수 없습니다. 다른 필수 항목·영역도 함께 확인해야 합니다."
+    if not selected: selected=[i for i in items if normalize(i['name']) in q]
+    if len(selected)!=1 or selected[0]['kind']=='unknown': return None
+    item=selected[0]
+    return (f"이 학과·학번의 제공 PDF에서 **{item['name']}은 {item['points']}점의 필수 인증 항목**입니다. "
+            '공식 이수·인증이 없고 해당 항목이 미충족이면, 다른 영역 점수로 대신 채워 다면적 졸업인증을 충족했다고 볼 수 없습니다. '
+            '다만 이것은 제공 PDF의 졸업인증 기준 설명이며, 개인의 최종 졸업 불가를 확정하는 답변은 아닙니다. '
+            '공식 인정·면제·대체 적용 여부와 최신 확정 기준은 학과에 확인하세요. ')+(short_rule_answer(question,rule,year) or '')
 
 
 def short_rule_answer(question,rule,year):
@@ -165,6 +198,8 @@ def additional_policy_answer(question,documents,department,year,store,use_llm):
 
 
 def answer_advisor(question,documents,department,year,store=None,use_llm=False,include_guide=False,previous_question=None,personal_result=None):
+    if previous_question and re.search(r'그럼|그러면|그거|그건|그것',question) and not admission_years(question) and len(set(admission_years(previous_question)))>1:
+        return '앞서 여러 학번의 기준을 비교했습니다. 어느 입학연도에 대한 질문인지 알려주세요.',[]
     if previous_question and not topics(question) and len(topics(previous_question))>1 and re.search(r'그럼|그거|그건|몇\s*점|몇\s*회',question) and not personal_intent(question,previous_question,bool(personal_result)):
         return '앞서 여러 항목을 이야기했습니다. 어떤 항목의 조건이나 점수를 뜻하는지 알려주세요: '+', '.join(topics(previous_question)),[]
     question,department,year=resolve_question(question,department,year,previous_question)
@@ -238,19 +273,27 @@ def answer_advisor(question,documents,department,year,store=None,use_llm=False,i
             if short:
                 reference=f"{original['source']} p.{original['page']}"
                 return '질문하신 세부 방법·일정은 제공 자료만으로 확인할 수 없습니다. 확인 가능한 기준은 다음과 같습니다.\n'+short+'\n근거: '+reference,partial_hits
-    if hits and original and not use_llm and all(doc.metadata['source']==original['source'] for doc in hits):
+    rule_fallback=not use_llm or not os.getenv('OPENAI_API_KEY') or 'LLM 연결 실패(' in text or 'AI 응답의 수치 또는 출처 인용을 검증하지 못해' in text
+    if hits and original and rule_fallback and all(doc.metadata['source']==original['source'] for doc in hits):
         resolved_years=admission_years(question)
         actual_year=int(resolved_years[0]) if len(set(resolved_years))==1 else year
         actual_rule=get_rule(department,actual_year)
         if actual_rule and len(set(resolved_years))<=1:
             asked_topics=list(dict.fromkeys(topics(question)+[i['name'] for i in common_items(actual_year)+actual_rule['items'] if normalize(i['name']).lower() in normalize(question).lower()]))
-            if len(asked_topics)>1:
+            consequence=mandatory_consequence(question,actual_rule,actual_year)
+            if consequence:
+                short=consequence
+            elif len(asked_topics)>1:
                 parts=[short_rule_answer(topic,actual_rule,actual_year) for topic in asked_topics]
                 short='\n'.join(dict.fromkeys(part for part in parts if part))
             else: short=short_rule_answer(asked_topics[0] if asked_topics else normalize_question(question),actual_rule,actual_year)
             if short:
                 citation=f"{actual_rule['source']} p.{actual_rule['page']}"
-                return f"{department} · {actual_year}학번\n{short}\n근거: {citation}\n\n근거 원문:\n"+'\n\n'.join(doc.page_content for doc in hits),hits
+                notice=''
+                if use_llm and not os.getenv('OPENAI_API_KEY'): notice='API 키 없음: 원문·검수된 기준 검색으로 답변합니다.\n'
+                elif use_llm and 'LLM 연결 실패(' in text: notice='LLM 연결 실패: 검수된 기준으로 답변합니다.\n'
+                elif use_llm and 'AI 응답의 수치 또는 출처 인용을 검증하지 못해' in text: notice='AI 응답 검증 실패: 검수된 기준으로 답변합니다.\n'
+                return notice+f"{department} · {actual_year}학번\n{short}\n근거: {citation}\n\n근거 원문:\n"+'\n\n'.join(doc.page_content for doc in hits),hits
     if not hits and use_llm:
         from .freeform import freeform_answer
         free=freeform_answer(question,retrieval_documents,department,year)

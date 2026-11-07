@@ -42,6 +42,9 @@ def save_pdf(raw, filename, directory):
     safe = Path(filename.replace('\\', '/')).name
     if not safe or Path(safe).suffix.lower() != '.pdf':
         raise ValueError('PDF 확장자가 필요합니다.')
+    # Linux corpus/index discovery uses *.pdf. Accept an uppercase upload suffix
+    # without leaving a valid document invisible on the deployed server.
+    safe = Path(safe).stem + '.pdf'
     try:
         with fitz.open(stream=raw, filetype='pdf') as pdf:
             if pdf.needs_pass:

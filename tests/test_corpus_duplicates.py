@@ -1,5 +1,5 @@
 """Do not expose a renamed copy of the supplied multi-cohort PDF as new evidence."""
-from pathlib import Path
+from pathlib import Path,PurePosixPath
 import fitz
 
 from src.document_manager import load_corpus, save_pdf
@@ -64,3 +64,18 @@ def test_private_duplicates_are_collapsed_but_bad_files_still_reported(tmp_path)
     docs, errors = load_corpus(base, private)
     assert len(docs) == 1 and docs[0].metadata['source'] == 'a.pdf'
     assert errors['broken.pdf'] and 'OCR' in errors['scan.pdf']
+
+
+def test_uppercase_pdf_upload_is_discoverable_on_linux_and_reused(tmp_path):
+    base=tmp_path/'base';base.mkdir()
+    private=tmp_path/'private'
+    raw=pdf_bytes('SYNTHETIC_UPPERCASE_UPLOAD_PROBE')
+    stored=save_pdf(raw,'UPPERCASE.PDF',private)
+    # Posix glob behavior is case-sensitive even when this regression runs on Windows.
+    assert PurePosixPath(stored.name).match('*.pdf')
+    assert save_pdf(raw,'renamed.PdF',private)==stored
+    assert len(list(private.iterdir()))==1
+    docs,errors=load_corpus(base,private)
+    assert not errors and len(docs)==1 and docs[0].metadata['source']==stored.name
+    text,hits=answer('SYNTHETIC_UPPERCASE_UPLOAD_PROBE',docs,'AI·빅데이터학과',2022)
+    assert hits and 'SYNTHETIC_UPPERCASE_UPLOAD_PROBE' in text and stored.name in text

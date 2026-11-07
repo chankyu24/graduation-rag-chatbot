@@ -3,7 +3,8 @@ from pathlib import Path
 import streamlit as raw_st
 from src.i18n import LocalizedUI,LANGUAGES,tr,table
 from src.account_ui import require_login,account_sidebar,restore_draft,remember_draft,persist
-from src.multilingual import answer_in_language
+from src.multilingual import answer_in_language,question_to_korean
+from src.advisor import resolve_question
 from src.evaluation import CASES,evaluate_case
 from src.release_info import release_info
 from src.ui_theme import apply_theme,render_header,render_section,render_result_summary
@@ -51,10 +52,11 @@ if original_pdf.is_file():
  st.sidebar.download_button('제공 PDF 다운로드',original_pdf.read_bytes(),original_pdf.name,mime='application/pdf',key='download_original_pdf')
 mode='제공 PDF 한 개' if menu=='PDF 단독 RAG' else '학과·졸업 통합' if menu=='학과·졸업 통합 상담' else '여러 PDF 통합'
 st.sidebar.caption('검색 범위: '+mode)
-vector=st.sidebar.toggle('다국어 임베딩 + FAISS',value=os.getenv('RAG_VECTOR_DEFAULT','1')=='1',help='기본 검색입니다. 첫 질문 메뉴에서 모델을 준비하며, 실패하면 원문 검색으로 전환하고 알려드립니다.',key='rag_vector_enabled')
-llm=st.sidebar.toggle('LLM 답변 사용',value=False,key='llm_enabled')
-if not os.getenv('OPENAI_API_KEY'): st.sidebar.caption('API 키 없음 · 생성형 답변 없이 근거 검색과 규칙 설명을 제공합니다.')
-with raw_st.sidebar.expander('실행 버전 / Version / 版本 / バージョン'):
+with st.sidebar.expander('교수용 기술 검증 · 고급 설정',expanded=False):
+ vector=st.toggle('다국어 임베딩 + FAISS',value=os.getenv('RAG_VECTOR_DEFAULT','1')=='1',help='기본 검색입니다. 첫 질문 메뉴에서 모델을 준비하며, 실패하면 원문 검색으로 전환하고 알려드립니다.',key='rag_vector_enabled')
+ llm=st.toggle('LLM 답변 사용',value=False,key='llm_enabled')
+ if not os.getenv('OPENAI_API_KEY'): st.caption('API 키 없음 · 생성형 답변 없이 근거 검색과 규칙 설명을 제공합니다.')
+ technical_status=raw_st.empty()
  release=release_info()
  raw_st.text('Git: '+(release['source_commit'] or '로컬 소스 / local source'))
  raw_st.text('Runtime SHA-256: '+release['runtime_sha256'])
@@ -105,7 +107,9 @@ if vector and docs and chat_menu:
   st.warning('벡터 검색 준비 실패. 원문 검색 사용: '+type(e).__name__)
 st.info('이 서비스는 다면적 졸업인증을 진단합니다. 최종 졸업 확정과 졸업학점은 학교 공식 학사시스템에서 확인하세요.')
 search_label='다국어 임베딩·FAISS' if store is not None else 'FAISS 기본 · 질문 메뉴에서 준비' if vector and not chat_menu else '검수된 기준표·키워드 검색'
-st.caption('현재 검색: '+search_label+' / 생성형 답변: '+('API 키 없음 · 검색 기반 설명' if llm and not os.getenv('OPENAI_API_KEY') else '요청됨 (API 키·응답 검증 필요)' if llm else '사용 안 함'))
+with technical_status.container():
+ st.caption('현재 검색: '+search_label+' / 생성형 답변: '+('API 키 없음 · 검색 기반 설명' if llm and not os.getenv('OPENAI_API_KEY') else '요청됨 (API 키·응답 검증 필요)' if llm else '사용 안 함'))
+st.caption('답변 방식: 생성형 AI · 문서 근거 확인 후 제공' if llm and os.getenv('OPENAI_API_KEY') else '답변 방식: 문서 근거 검색 · 생성형 AI 사용 안 함')
 st.caption('적용 자료: 2026년도 1차 시안. 학사시스템의 분류·인정 결과와 다르면 학교 확인이 필요합니다.')
 
 def open_menu(target):
@@ -190,7 +194,7 @@ if menu=='교수용 과제 평가':
  st.caption('추가 PDF는 합성 시연 자료입니다. 학교 규정이 아니며 진단 점수를 바꾸지 않습니다. 다중 문서 메뉴에서 등록 후 “시연자료 확인코드 알려줘”로 검색하세요.')
  with st.expander('처음 오셨나요? 사용 순서 보기'):
   st.subheader('교수용 과제 평가')
-  st.markdown('**교수님 확인 순서**\n1. 왼쪽에서 PDF 단독 RAG를 선택해 질문하고 출처를 확인합니다.\n2. 다국어 임베딩 + FAISS를 켜 실제 벡터 검색을 확인합니다.\n3. 다중 문서 RAG에서 별도 PDF를 등록한 뒤 새 문서 내용으로 질문합니다.\n4. 졸업요건 진단에서 수강 CSV/XLSX와 활동을 입력하고 부족한 항목을 확인합니다.')
+  st.markdown('**교수님 확인 순서**\n1. PDF 단독 RAG에서 질문하고 답변 아래 원문 페이지를 확인합니다.\n2. 다중 문서 RAG에서 가상 PDF를 등록하고 확인코드를 질문합니다.\n3. 가상 수강 목록과 활동으로 진단한 뒤 결과 상담으로 이동합니다.\n4. 검색 설정과 실행 버전은 왼쪽 교수용 기술 검증에서 확인합니다. FAISS는 기본으로 켜져 있습니다.')
   st.caption('이 화면은 간편 HTML이 아니라 원본 Python 프로그램입니다. API 키 없이 검색·계산을 사용할 수 있으며, 생성형 답변은 별도 API 설정이 필요합니다.')
  case=st.selectbox('가상 평가 사례',CASES,key='evaluation_case')
  if st.button('가상 사례 실행',type='primary'):
@@ -212,14 +216,15 @@ elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG
  if mode=='학과·졸업 통합': st.caption('현재 근거: 졸업인증 PDF + 확인한 학과 홈페이지 교육과정·연락처. 전체 졸업학점 확정 규정은 미제공입니다.')
  context=hashlib.sha256(json.dumps([department,year,mode,sig,criteria_sig,lang,guide_sig],ensure_ascii=False).encode()).hexdigest()
  histories=st.session_state.setdefault('chat_histories',{})
+ resolved_history=st.session_state.setdefault('chat_resolved_questions',{})
  st.session_state.messages=histories.setdefault(context,[])
  source_history=st.session_state.setdefault('chat_sources',{}).setdefault(context,{})
  personal=consultation_context(st.session_state.get('diagnostic_results',{}).get(profile_key),department,year,st.session_state.get('diagnostic_inputs',{}).get(profile_key),criteria_sig,diagnostic_sig,user['account_id'])
  if personal:
-  st.caption('현재 학과·학번의 내 진단 결과가 상담에 연결됩니다. 점수는 Python 진단 결과를 그대로 사용합니다.')
-  if personal.get('_stale'): st.warning('진단 후 입력·기준이 바뀌었거나 재확인 시점이 지났습니다. 진단 메뉴에서 다시 계산해 주세요.')
+  st.caption('현재 학과·학번의 내 진단 결과를 기준으로 상담합니다. 입력하지 않은 활동을 완료로 가정하지 않습니다.')
+  if personal.get('_stale'): st.warning('진단 후 입력 또는 적용 기준이 변경되었습니다. 진단 메뉴에서 다시 계산해 주세요.')
  if st.button('현재 대화 지우기'):
-  histories[context]=[]; st.session_state.messages=[];source_history.clear()
+  histories[context]=[]; st.session_state.messages=[];source_history.clear();resolved_history.pop(context,None)
  def render_message(role,content,hits=(),message_index=0):
   with st.chat_message(role,avatar=':material/school:' if role=='assistant' else ':material/person:'):
    main,separator,source=content.partition('\n\n근거 원문:\n')
@@ -236,8 +241,13 @@ elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG
      with st.expander('검색 검증 정보 (교수용)'):
       raw_st.json(retrieval_diagnostics(scoped,store))
  for n,(role,content) in enumerate(st.session_state.get('messages',[])): render_message(role,content,source_history.get(n,()),n)
+ def queue_chat_question(question):
+  raw_st.session_state.pending_chat_question=(profile_key,question)
+ example_columns=raw_st.columns(3)
+ for column,label,question in zip(example_columns,['졸업인증 기준','코딩인증 조건','내 부족 항목' if personal else '자격증 인정'],['졸업인증 총점','코딩역량인증제 조건','나는 어떤 활동이 부족해?' if personal else '자격증 인정 점수']):
+  with column: st.button(label,key='chat_example_'+question,on_click=queue_chat_question,args=(question,),width='stretch')
  options=['졸업인증 총점','학과활동 기준','코딩역량인증제 조건','자격증 인정 점수']
- if personal: options+=['나는 어떤 활동이 부족해?','졸업인증을 충족하려면 무엇부터 준비해야 해?','이미 이수한 과목은 무엇이야?','어떤 영역에서 점수가 가장 부족해?','자격증을 취득하면 어떤 항목을 충족할 수 있어?','내 진단 결과를 쉽게 설명해 줘.']
+ if personal: options+=['나는 어떤 활동이 부족해?','졸업인증을 충족하려면 무엇부터 준비해야 해?','이미 이수한 과목은 무엇이야?','어떤 영역에서 점수가 가장 부족해?','자격증을 취득하면 어떤 항목을 충족할 수 있어?','내가 이수한 과목 중 인정되지 않은 과목은?','내 진단 결과를 쉽게 설명해 줘.']
  sample=st.selectbox('추천 질문',options,key='sample_question')
  ask_sample=st.button('선택한 질문 보내기')
  q=st.chat_input('예: AI·빅데이터학과 2022학번 졸업인증 총점은?',max_chars=2000)
@@ -246,9 +256,11 @@ elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG
  if ask_sample: q=sample
  if q:
   with st.chat_message('user',avatar=':material/person:'): st.text(q)
-  previous_question=next((content for role,content in reversed(st.session_state.messages) if role=='user'),None)
+  previous_question=resolved_history.get(context) or next((content for role,content in reversed(st.session_state.messages) if role=='user'),None)
   with st.spinner('문서에서 근거를 확인하고 있어요…'):
    result,hits=answer_in_language(q,docs,department,year,store,llm,lang,mode=='학과·졸업 통합',previous_question,personal)
+  resolved_question,resolved_department,resolved_year=resolve_question(question_to_korean(q,lang),department,year,previous_question)
+  resolved_history[context]=f'{resolved_department} {resolved_year}학번 {resolved_question}'
   answer_index=len(st.session_state.messages)+1
   source_history[answer_index]=hits
   render_message('assistant',result,hits,answer_index)

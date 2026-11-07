@@ -4,6 +4,16 @@ import re
 LANGUAGES={'ko':'한국어','en':'English','zh':'简体中文','ja':'日本語'}
 # Each value is English, Simplified Chinese, Japanese; Korean is the lookup key.
 MESSAGES={
+'교수용 기술 검증 · 고급 설정':('Instructor verification / advanced settings','教师技术验证／高级设置','教員向け技術検証・詳細設定'),
+'답변 방식: 문서 근거 검색 · 생성형 AI 사용 안 함':('Answer mode: document search; generative AI is off','回答模式：文档依据检索，未使用生成式AI','回答モード：文書根拠検索・生成AIは未使用'),
+'답변 방식: 생성형 AI · 문서 근거 확인 후 제공':('Answer mode: generative AI with source checks','回答模式：生成式AI，并核对文档依据','回答モード：文書根拠を確認した生成AI'),
+'현재 학과·학번의 내 진단 결과를 기준으로 상담합니다. 입력하지 않은 활동을 완료로 가정하지 않습니다.':('Advice uses your results for this department and cohort. Unreported activities are not assumed complete.','咨询依据当前院系及入学年份的个人诊断，未输入的活动不会视为已完成。','現在の学科・入学年度の診断に基づく相談です。未入力の活動は完了と見なしません。'),
+'진단 후 입력 또는 적용 기준이 변경되었습니다. 진단 메뉴에서 다시 계산해 주세요.':('Inputs or requirements changed after your check. Recalculate in Certification check.','诊断后输入或适用标准已变更，请重新诊断。','診断後に入力または適用基準が変わりました。診断メニューで再計算してください。'),
+'졸업인증 기준':('Certification requirements','毕业认证标准','卒業認証の基準'),
+'코딩인증 조건':('Coding certification','编程认证条件','コーディング認証の条件'),
+'내 부족 항목':('My unmet requirements','我的不足项目','自分の不足項目'),
+'자격증 인정':('Certificate recognition','资格证书认定','資格の認定'),
+'내가 이수한 과목 중 인정되지 않은 과목은?':('Which of my entered courses were not recognized?','我输入的已修课程中哪些未获认定？','入力した履修科目のうち認定されていない科目は？'),
 '순천향대 졸업 길잡이':('SCH Graduation Guide','顺天乡大学毕业指南','順天郷大学 卒業ガイド'),
 'PDF 근거로 알아보고, 영역별 조건으로 준비하는 나의 졸업인증':('Check source-backed certification requirements and plan your next steps.','依据PDF核对毕业认证要求，规划下一步。','PDFの根拠で卒業認証要件を確認し、次の準備を進めましょう。'),
 '로그인':('Sign in','登录','ログイン'),'회원가입':('Create account','注册','アカウント登録'),

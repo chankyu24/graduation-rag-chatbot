@@ -89,6 +89,9 @@ def normalize_question(question):
     question=re.sub(r'(?:뭘|무엇을)\s*(?:해야|하면)(?:하나요|해요|해|돼요|돼|할까요)?',' 조건 ',question)
     question=re.sub(r'(몇|얼마나)\s*(점|번|회)(?:이나|이야|이에요|인지|야)?',r' \1\2 ',question)
     question=re.sub(r'몇\s*(?:이어야|이여야)(?:돼요|돼|해요|해)?',' 몇 ',question)
+    # Keep negation as query data while separating common attached predicates.
+    question=re.sub(r'안\s*하면',' 안 하면 ',question)
+    question=re.sub(r'졸업\s*못\s*해(?:요)?',' 졸업 못 해 ',question)
     return question
 
 
@@ -124,7 +127,7 @@ def topical_query(question, department, year):
         q=re.sub(pattern,'',q)
         if department=='AI·빅데이터학과':
             q=re.sub(r'AI\s*[·ㆍ・.]?\s*빅\s*데이터\s*학과','',q,flags=re.IGNORECASE)
-    q=re.sub(r'20\d{2}\s*(?:학번|년도|년)?','',q)
+    q=re.sub(r'20\d{2}\s*(?:학번(?:인데|이고|입니다|이야|으로|은|는)?|년도|년)?','',q)
     return q.strip()
 
 
