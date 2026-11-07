@@ -90,8 +90,8 @@ def test_text_translates_notices_without_rewriting_names_or_original_evidence():
     body='원본 근거: 예비창업설계 5점 · 2022학번'
     ui.text(body)
     assert raw.calls[-1][1][0]==body
-    ui.text('이찬규 · 20221273')
-    assert raw.calls[-1][1][0]=='이찬규 · 20221273'
+    ui.text('Test Student · 20229991')
+    assert raw.calls[-1][1][0]=='Test Student · 20229991'
     assert tr('학번','en')=='Student ID'
     assert tr('2022학번','en')=='2022 cohort'
 

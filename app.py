@@ -5,6 +5,7 @@ from src.i18n import LocalizedUI,LANGUAGES,tr,table
 from src.account_ui import require_login,account_sidebar,restore_draft,remember_draft,persist
 from src.multilingual import answer_in_language
 from src.evaluation import CASES,evaluate_case
+from src.release_info import release_info
 from src.department_guide import guide_documents
 from dotenv import load_dotenv
 from src.utils import ROOT,read_course_file
@@ -24,6 +25,11 @@ st=LocalizedUI(raw_st,lang)
 st.markdown('<style>.stApp{background:#f5f7fc} h1,h2,h3{color:#183769} div.stButton>button{border-radius:10px} [data-testid=stForm]{background:white;border-radius:16px;padding:24px} [data-testid=stMetric]{background:white;border-radius:12px;padding:14px}</style>',unsafe_allow_html=True)
 st.title('🎓 순천향대 졸업 길잡이')
 st.caption('PDF 근거로 알아보고, 영역별 조건으로 준비하는 나의 졸업인증')
+with raw_st.expander('실행 버전 / Version / 版本 / バージョン'):
+ release=release_info()
+ raw_st.text('Git: '+(release['source_commit'] or '로컬 소스 / local source'))
+ raw_st.text('Runtime SHA-256: '+release['runtime_sha256'])
+ raw_st.caption('ZIP의 SOURCE_VERSION.json과 비교할 수 있습니다. / Compare with SOURCE_VERSION.json in the ZIP.')
 user=require_login(st,lang)
 account_sidebar(st,user)
 if lang!='ko': st.caption('원문 과목명과 근거는 한국어로 함께 표시됩니다. 자유로운 답변 번역은 API 연결이 필요할 수 있습니다.')
@@ -179,7 +185,7 @@ elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG
  for role,content in st.session_state.get('messages',[]): render_message(role,content)
  sample=st.selectbox('추천 질문',['졸업인증 총점','학과활동 기준','코딩역량인증제 조건','자격증 인정 점수'],key='sample_question')
  ask_sample=st.button('선택한 질문 보내기')
- q=st.chat_input('예: AI·빅데이터학과 2022학번 졸업인증 총점은?')
+ q=st.chat_input('예: AI·빅데이터학과 2022학번 졸업인증 총점은?',max_chars=2000)
  if ask_sample: q=sample
  if q:
   with st.chat_message('user'): st.text(q)
@@ -191,7 +197,7 @@ elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG
   st.session_state.messages.extend([('user',q),('assistant',result)])
 elif menu=='졸업요건 진단':
  rule=get_rule(department,year)
- if not rule: st.warning('해당 학과·학번 기준이 없습니다. 문서를 추가해 주세요.'); st.stop()
+ if not rule: st.warning('확인 필요: 해당 학과·학번 기준이 없습니다. 공식 기준 문서를 추가하고 검수해야 합니다.'); st.stop()
  st.caption(f"원본 p.{rule['page']} · 필요 합계 {sum(rule['required'].values())}점")
  items=common_items(year)+rule['items']
  scope=f'{department}_{year}'
