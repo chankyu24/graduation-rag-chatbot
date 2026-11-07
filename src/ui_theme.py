@@ -172,7 +172,8 @@ _CSS = """
 }
 [data-testid="stSidebarContent"] {padding-top: 1.25rem;}
 [data-testid="stSidebar"] :is(h1,h2,h3,p,label,summary) {color: #eef4f5;}
-[data-testid="stSidebar"] [data-testid="stText"] {color: #eef4f5;}
+[data-testid="stSidebar"] [data-testid="stText"],
+[data-testid="stSidebar"] [data-testid="stText"] span {color: #eef4f5;}
 [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {color: #b7c9d3; font-size: .74rem;}
 [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {color: #b7c9d3; font-size: .72rem; letter-spacing: .025em;}
 [data-testid="stSidebar"] [data-testid="stRadio"] label {
@@ -243,7 +244,7 @@ _CSS = """
   .sch-feature {padding: 1rem;}
 }
 @media (max-width: 600px) {
-  [data-testid="stMainBlockContainer"] {padding: 1.65rem 1rem 4rem;}
+  [data-testid="stMainBlockContainer"] {padding: 3rem 1rem 4rem;}
   .stApp h1 {font-size: 2rem; line-height: 1.3; letter-spacing: -.05em;}
   .stApp h2 {font-size: 1.4rem;}
   [data-testid="stForm"] {padding: 1rem; border-radius: 13px;}
