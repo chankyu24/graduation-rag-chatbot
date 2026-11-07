@@ -171,6 +171,22 @@ def answer_advisor(question,documents,department,year,store=None,use_llm=False,i
     explicit_departments=[name for name in {r['department'] for r in load_rules()['profiles']} if normalize(name) in normalize(question)]
     if len(explicit_departments)>1:
         return '학과를 하나씩 선택하여 질문해 주세요.',[]
+    # Explicit conjunctions are separate requests: requiring every subject to
+    # occur on one page otherwise rejects valid questions spanning two PDFs.
+    # Keep unknown clauses visible rather than silently dropping their subject.
+    expanded=re.sub(r'(총점|조건|기준|점수|활동|확인코드|학점|요건)(?:과|와)(?=\s)',r'\1 그리고 ',question)
+    parts=[re.sub(r'(?<![가-힣])(?:함께|같이)(?![가-힣])',' ',part).strip()
+           for part in re.split(r'\s+(?:그리고|및|또한)\s+',expanded)]
+    if 1<len(parts)<=3 and all(parts) and len(set(admission_years(question)))<=1:
+        sections=[];combined=[];seen=set()
+        for n,part in enumerate(parts,1):
+            response,hits=answer_advisor(part,documents,department,year,store,use_llm,include_guide,None,personal_result)
+            sections.append(f'### 요청 {n}: {part}\n'+response.partition('\n\n근거 원문:\n')[0])
+            for hit in hits:
+                key=(hit.metadata.get('source'),hit.metadata.get('page'),hit.page_content)
+                if key not in seen:combined.append(hit);seen.add(key)
+        evidence='\n\n'.join(f"[{n}] {hit.metadata['source']} p.{hit.metadata['page']}\n{hit.page_content}" for n,hit in enumerate(combined,1))
+        return '\n\n'.join(sections)+('\n\n근거 원문:\n'+evidence if evidence else ''),combined
     # Academic credits must never be manufactured from certification points.
     if re.search(r'졸업\s*학점|총\s*학점|졸업.*학점|학점.*졸업',question):
         additional=additional_policy_answer(question,documents,department,year,store,use_llm)

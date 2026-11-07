@@ -76,12 +76,12 @@ def render_pdf_sources(raw_st, documents, allowed_directories, key_prefix, lang=
     if not entries:
         return
     selected_key=key_prefix+'_selected_pdf_page'
-    with raw_st.expander(_say(lang,'출처 PDF 페이지 확인','Inspect cited PDF pages','查看引用PDF页面','出典PDFのページを確認')):
+    with raw_st.expander(_say(lang,'출처 PDF 페이지 확인','Inspect cited PDF pages','查看引用PDF页面','出典PDFのページを確認'),expanded=bool(raw_st.session_state.get(selected_key))):
         for entry in entries:
             source,page,token=entry['source'],entry['page'],entry['token']
             raw_st.caption(f'{source} · p.{page}')
-            if raw_st.button(_say(lang,f'원문 p.{page} 열기',f'Open original p.{page}',f'打开原文第{page}页',f'原文p.{page}を開く'),key=key_prefix+'_'+token):
-                raw_st.session_state[selected_key]=token
+            raw_st.button(_say(lang,f'원문 p.{page} 열기',f'Open original p.{page}',f'打开原文第{page}页',f'原文p.{page}を開く'),key=key_prefix+'_'+token,
+                          on_click=raw_st.session_state.__setitem__,args=(selected_key,token))
             if raw_st.session_state.get(selected_key)!=token:
                 continue
             try:

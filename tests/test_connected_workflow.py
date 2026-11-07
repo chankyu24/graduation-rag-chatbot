@@ -76,3 +76,15 @@ def test_vector_initialization_error_exposes_fallback_and_still_answers(monkeypa
     app.chat_input[0].set_value('졸업인증 총점').run(timeout=90)
     assert not app.exception and '95점' in app.session_state.messages[-1][1]
     click(app,'leave_guest_review')
+
+
+def test_source_page_stays_open_after_first_answer_rerender():
+    app=guest();click(app,'quick_PDF 단독 RAG')
+    app.chat_input[0].set_value('졸업인증 총점').run(timeout=90)
+    next(b for b in app.button if b.label=='원문 p.5 열기').click().run(timeout=90)
+    assert not app.exception
+    source=next(e for e in app.expander if e.label=='출처 PDF 페이지 확인')
+    assert source.proto.expanded is True
+    assert any(b.label=='이 페이지 PDF 다운로드' for b in app.get('download_button'))
+    assert any('p.5' in caption for image in app.get('image') for caption in image.captions)
+    click(app,'leave_guest_review')
