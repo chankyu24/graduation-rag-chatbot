@@ -18,6 +18,37 @@ FOLLOWUPS={
 'zh':{'那需要多少分','那么需要多少分','那是多少分','那多少分','多少分'},
 'ja':{'では何点ですか','それは何点ですか','何点ですか'},
 }
+PERSONAL_QUESTIONS={
+    'en':{
+        'what activities am i missing':'내 진단에서 부족한 활동을 알려줘',
+        'what am i missing':'내 진단에서 부족한 항목을 알려줘',
+        'what should i prepare first':'내 진단의 준비 우선순위를 알려줘',
+        'which courses have i completed':'내가 이미 이수한 과목을 알려줘',
+        'which category has the largest shortage':'내 진단에서 가장 부족한 영역은?',
+        'would sqld help my result':'SQLD를 따면 내 진단에 도움이 돼?',
+        'would adsp help my result':'ADsP를 따면 내 진단에 도움이 돼?',
+        'explain my results simply':'내 진단 결과를 쉽게 설명해줘',
+        'explain it simply':'쉽게 설명해줘',
+    },
+    'zh':{
+        '我还缺少哪些活动':'내 진단에서 부족한 활동을 알려줘',
+        '我应该先准备什么':'내 진단의 준비 우선순위를 알려줘',
+        '我已经修完哪些课程':'내가 이미 이수한 과목을 알려줘',
+        '我最缺少哪个领域的分数':'내 진단에서 가장 부족한 영역은?',
+        '取得SQLD对我的诊断有帮助吗':'SQLD를 따면 내 진단에 도움이 돼?',
+        '请简单解释我的诊断结果':'내 진단 결과를 쉽게 설명해줘',
+        '请简单解释':'쉽게 설명해줘',
+    },
+    'ja':{
+        '私に不足している活動は何ですか':'내 진단에서 부족한 활동을 알려줘',
+        '何から準備すればよいですか':'내 진단의 준비 우선순위를 알려줘',
+        '私はどの科目を修得済みですか':'내가 이미 이수한 과목을 알려줘',
+        'どの分野が最も不足していますか':'내 진단에서 가장 부족한 영역은?',
+        'SQLDの取得は私の診断に役立ちますか':'SQLD를 따면 내 진단에 도움이 돼?',
+        '私の診断結果を簡単に説明してください':'내 진단 결과를 쉽게 설명해줘',
+        '簡単に説明してください':'쉽게 설명해줘',
+    },
+}
 
 
 def _year_tokens(question,lang):
@@ -35,6 +66,9 @@ def question_to_korean(question,lang):
     if lang not in TOPICS: return question
     clean=re.sub(r'20\d{2}|[\W_]+',' ',question).strip().lower()
     clean=re.sub(r'\s+',' ',clean) if lang=='en' else clean.replace(' ','').replace('年','').replace('级','')
+    personal=next((translation for original,translation in PERSONAL_QUESTIONS[lang].items() if original.lower()==clean),None)
+    if personal:
+        return ' '.join(_year_tokens(question,lang)+[personal])
     if clean in FOLLOWUPS[lang]:
         return ' '.join(_year_tokens(question,lang)+['그럼 몇 점'])
     mapping=TOPICS[lang]
@@ -170,8 +204,14 @@ def answer_in_language(question,documents,department,year,store,use_llm,lang,inc
     text,hits=answer_advisor(localized_question,documents,department,year,store,use_llm,include_guide,localized_previous,personal_result)
     if lang=='ko': return text,hits
     resolved_question,resolved_department,resolved_year=resolve_question(localized_question,department,year,localized_previous)
-    summary=_offline_summary(resolved_question,text,hits,department,year,lang)
-    if use_llm and os.getenv('OPENAI_API_KEY'):
+    from .diagnosis_advisor import diagnostic_answer
+    usable_result=personal_result if personal_result and personal_result.get('department')==resolved_department and personal_result.get('year')==resolved_year else None
+    personal=diagnostic_answer(resolved_question,usable_result,localized_previous)
+    personal_translation=personal is not None and personal[0]==text
+    summary=diagnostic_answer(resolved_question,usable_result,localized_previous,lang)[0] if personal_translation else _offline_summary(resolved_question,text,hits,department,year,lang)
+    # Personal explanations and what-if points are rendered by the deterministic
+    # diagnosis advisor, never recalculated or rewritten by a language model.
+    if not personal_translation and use_llm and os.getenv('OPENAI_API_KEY'):
         try:
             from langchain_openai import ChatOpenAI
             main=text.partition('\n\n근거 원문:\n')[0].partition('\n\n근거 확인:\n')[0]

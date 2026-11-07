@@ -387,3 +387,24 @@ MESSAGES.update({
 '처음 오셨나요? 사용 순서 보기':('First visit? See how it works','首次使用？查看操作步骤','初めての方へ：使い方を見る'),
 '문서에서 근거를 확인하고 있어요…':('Checking the source documents…','正在核对文档依据…','文書の根拠を確認しています…'),
 })
+
+MESSAGES.update({
+'학과·학번':('Department / cohort','院系及入学年份','学科・入学年度'),
+'수강 과목':('Courses','修读课程','履修科目'),
+'활동·인정 정보':('Activities / recognition','活动及认定','活動・認定情報'),
+'진단 실행':('Run check','运行诊断','診断実行'),
+'결과·상담':('Results / advice','结果及咨询','結果・相談'),
+'진단 진행 단계':('Certification workflow','认证诊断步骤','認証チェックの手順'),
+'입력 수정하기':('Edit my inputs','修改输入','入力を修正'),
+'진단 결과로 상담하기':('Discuss my results','咨询诊断结果','診断結果について相談'),
+'진단 결과 CSV 다운로드':('Download results as CSV','下载CSV诊断结果','診断結果をCSVで保存'),
+'샘플 수강 CSV 다운로드':('Download sample course CSV','下载示例课程CSV','履修CSVサンプルを保存'),
+'샘플 수강 XLSX 다운로드':('Download sample course XLSX','下载示例课程XLSX','履修XLSXサンプルを保存'),
+'가상 추가 PDF 다운로드':('Download synthetic demo PDF','下载合成演示PDF','架空デモPDFを保存'),
+'1. 학과·학번 확인':('1. Confirm department / cohort','1. 确认院系及入学年份','1. 学科・入学年度を確認'),
+'2. 수강 과목 입력':('2. Enter completed courses','2. 输入修读课程','2. 履修科目を入力'),
+'3. 활동·공식 인정 정보 입력':('3. Enter activities / official recognition','3. 输入活动及正式认定','3. 活動・正式認定を入力'),
+'4. 입력 확인 후 진단':('4. Review inputs and run check','4. 确认输入后诊断','4. 入力を確認して診断'),
+'5. 부족 조건 확인 및 상담':('5. Review missing requirements / ask for advice','5. 查看不足并咨询','5. 不足要件を確認して相談'),
+'가상 시연 입력 결과입니다. 실제 학생 이수 내역이나 학교의 승인 결과가 아닙니다.':('Synthetic demonstration inputs. These are not actual student records or university approval.','此结果来自合成演示输入，并非实际学生记录或学校审批。','架空のデモ入力による結果です。実際の履修記録や大学の承認ではありません。'),
+})

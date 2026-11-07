@@ -10,7 +10,9 @@ from src.ui_theme import apply_theme,render_header,render_section,render_result_
 from src.department_guide import guide_documents
 from dotenv import load_dotenv
 from src.utils import ROOT,read_course_file
-from src.diagnostic_state import input_signature,stamp_result,is_stale
+from src.diagnostic_state import input_signature,input_payload,stamp_result,is_stale,consultation_context
+from src.workflow import show_steps,fill_demo_inputs,result_csv
+from src.source_viewer import render_pdf_sources
 from datetime import datetime,timezone,timedelta
 from src.pdf_loader import load_directory,load_pdf
 from src.document_manager import save_pdf,private_document_directory,load_corpus
@@ -49,8 +51,9 @@ if original_pdf.is_file():
  st.sidebar.download_button('제공 PDF 다운로드',original_pdf.read_bytes(),original_pdf.name,mime='application/pdf',key='download_original_pdf')
 mode='제공 PDF 한 개' if menu=='PDF 단독 RAG' else '학과·졸업 통합' if menu=='학과·졸업 통합 상담' else '여러 PDF 통합'
 st.sidebar.caption('검색 범위: '+mode)
-vector=st.sidebar.toggle('다국어 임베딩 + FAISS',value=os.getenv('RAG_VECTOR_DEFAULT','0')=='1',help='처음에는 무료 모델 다운로드가 필요합니다. 끄면 인터넷 없는 원문 검색을 사용합니다.',key='rag_vector_enabled')
+vector=st.sidebar.toggle('다국어 임베딩 + FAISS',value=os.getenv('RAG_VECTOR_DEFAULT','1')=='1',help='기본 검색입니다. 첫 질문 메뉴에서 모델을 준비하며, 실패하면 원문 검색으로 전환하고 알려드립니다.',key='rag_vector_enabled')
 llm=st.sidebar.toggle('LLM 답변 사용',value=False,key='llm_enabled')
+if not os.getenv('OPENAI_API_KEY'): st.sidebar.caption('API 키 없음 · 생성형 답변 없이 근거 검색과 규칙 설명을 제공합니다.')
 with raw_st.sidebar.expander('실행 버전 / Version / 版本 / バージョン'):
  release=release_info()
  raw_st.text('Git: '+(release['source_commit'] or '로컬 소스 / local source'))
@@ -70,46 +73,46 @@ else:
  docs,errors=read_all(sig,str(UPLOAD_DATA),include_uploads)
 docs=list(docs)  # Guide references must not accumulate in the session's cached PDF list.
 criteria_sig=hashlib.sha256((ROOT/'rules/graduation_rules.json').read_bytes()).hexdigest()
+diagnostic_sig=fingerprint(DATA)  # Calculations depend on the original PDF and reviewed rules, not the selected search menu.
 profile_key=f'{department}_{year}'
 guide_sig=hashlib.sha256((ROOT/'references/department_guide.json').read_bytes()).hexdigest() if mode=='학과·졸업 통합' else ''
 for filename,error in errors.items(): st.warning(f'문서 읽기 오류 · {filename}: {error}')
 if mode=='제공 PDF 한 개': docs=[d for d in docs if d.metadata['source']==load_rules()['source']]
 if mode=='학과·졸업 통합': docs+=guide_documents()
 store=None
-if vector and docs:
+chat_menu=menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG']
+if vector and docs and chat_menu:
  try:
-  @st.cache_resource(max_entries=2)
-  def shared_embeddings(model_name):
-   from langchain_huggingface import HuggingFaceEmbeddings
-   return HuggingFaceEmbeddings(model_name=model_name,model_kwargs={'device':'cpu'},encode_kwargs={'normalize_embeddings':True,'batch_size':8})
-  @st.cache_resource
-  def index(sig,scope,private_path):
+  @st.cache_resource(max_entries=1)
+  def shared_embeddings(model_name,backend):
    from src.embedding import get_embeddings
-   selected,_=load_corpus(DATA,private_path,scope!='제공 PDF 한 개')
-   if scope=='제공 PDF 한 개': selected=[d for d in selected if d.metadata['source']==load_rules()['source']]
-   if scope=='학과·졸업 통합': selected+=guide_documents()
-   rule_sig=hashlib.sha256((ROOT/'rules/graduation_rules.json').read_bytes()).hexdigest()
-   directory=Path(private_path)/'.index'/hashlib.sha256((sig+scope+rule_sig+os.getenv('EMBEDDING_MODEL','default')).encode()).hexdigest()[:16]
-   embeddings=shared_embeddings(os.getenv('EMBEDDING_MODEL','sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'))
-   if (directory/'index.faiss').exists():
-    try: return load_store(embeddings,directory)
-    except Exception: pass
-   return build_store(split_documents(selected),embeddings,directory)
+   return get_embeddings(model_name)
   with st.spinner('다국어 벡터 인덱스 준비 중…'):
-   index_signature=sig+criteria_sig+os.getenv('EMBEDDING_MODEL','default')+guide_sig+mode
-   if user.get('guest'):
-    if st.session_state.get('guest_index_signature')!=index_signature:
-     embeddings=shared_embeddings(os.getenv('EMBEDDING_MODEL','sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'))
-     st.session_state.guest_vector_store=build_store(split_documents(docs),embeddings,UPLOAD_DATA/'.index')
-     st.session_state.guest_index_signature=index_signature
-    store=st.session_state.guest_vector_store
-   else:
-    store=index(index_signature,mode,str(UPLOAD_DATA))
- except Exception as e: st.warning('벡터 검색 준비 실패. 원문 검색 사용: '+str(e))
+   index_signature=sig+criteria_sig+os.getenv('EMBEDDING_MODEL','default')+os.getenv('EMBEDDING_BACKEND','onnx')+'e8f8c21'+guide_sig+mode
+   store_key='guest_vector_store' if user.get('guest') else 'user_vector_store'
+   signature_key='guest_index_signature' if user.get('guest') else 'user_index_signature'
+   if st.session_state.get(signature_key)!=index_signature:
+    embeddings=shared_embeddings(os.getenv('EMBEDDING_MODEL','sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'),os.getenv('EMBEDDING_BACKEND','onnx'))
+    directory=UPLOAD_DATA/'.index'/hashlib.sha256(index_signature.encode()).hexdigest()[:16]
+    candidate=None
+    if not user.get('guest') and (directory/'index.faiss').exists():
+     try: candidate=load_store(embeddings,directory)
+     except Exception: pass
+    st.session_state[store_key]=candidate or build_store(split_documents(docs),embeddings,directory)
+    st.session_state[signature_key]=index_signature
+   store=st.session_state[store_key]
+ except Exception as e:
+  st.warning('벡터 검색 준비 실패. 원문 검색 사용: '+type(e).__name__)
 st.info('이 서비스는 다면적 졸업인증을 진단합니다. 최종 졸업 확정과 졸업학점은 학교 공식 학사시스템에서 확인하세요.')
-st.caption('현재 검색: '+('다국어 임베딩·FAISS' if store is not None else '검수된 기준표·키워드 검색')+' / 생성형 답변: '+('요청됨 (API 키·응답 검증 필요)' if llm else '사용 안 함'))
+search_label='다국어 임베딩·FAISS' if store is not None else 'FAISS 기본 · 질문 메뉴에서 준비' if vector and not chat_menu else '검수된 기준표·키워드 검색'
+st.caption('현재 검색: '+search_label+' / 생성형 답변: '+('API 키 없음 · 검색 기반 설명' if llm and not os.getenv('OPENAI_API_KEY') else '요청됨 (API 키·응답 검증 필요)' if llm else '사용 안 함'))
+st.caption('적용 자료: 2026년도 1차 시안. 학사시스템의 분류·인정 결과와 다르면 학교 확인이 필요합니다.')
 
 def open_menu(target):
+ raw_st.session_state.main_menu=target
+
+def open_consultation(question='내 진단 결과를 쉽게 설명해 줘',target='학과·졸업 통합 상담'):
+ raw_st.session_state.pending_chat_question=(profile_key,question)
  raw_st.session_state.main_menu=target
 
 quick_columns=raw_st.columns(3)
@@ -118,12 +121,16 @@ for column,label,target in zip(quick_columns,['PDF에 질문하기','문서 추�
   st.button(label,key='quick_'+target,on_click=open_menu,args=(target,),width='stretch')
 def render_result(result):
  current_input=st.session_state.get('diagnostic_inputs',{}).get(profile_key)
- if is_stale(result,current_input,criteria_sig,sig):
+ if is_stale(result,current_input,criteria_sig,diagnostic_sig):
   st.warning('입력 내역 또는 기준 문서가 변경되었습니다. 아래는 지난 진단 결과입니다. 진단 메뉴에서 다시 계산해 주세요.')
  if result.get('generated_at'):
   timestamp=datetime.fromisoformat(result['generated_at']).astimezone(timezone(timedelta(hours=9)))
   st.caption('진단 시각: '+timestamp.strftime('%Y-%m-%d %H:%M:%S KST'))
  st.subheader(result['status'])
+ if result.get('synthetic'): st.info('가상 시연 입력 결과입니다. 실제 학생 이수 내역이나 학교의 승인 결과가 아닙니다.')
+ result_actions=raw_st.columns(2)
+ with result_actions[0]: st.button('입력 수정하기',key='edit_diagnosis',on_click=open_menu,args=('졸업요건 진단',),width='stretch')
+ with result_actions[1]: st.button('진단 결과로 상담하기',key='consult_diagnosis',on_click=open_consultation,width='stretch')
  render_result_summary(raw_st,lang,result)
  st.write('다면적 졸업인증 충족 예상' if result['status']=='충족' else '다면적 졸업인증: '+result['status'])
  st.write('전체 졸업 가능 여부: 확인 필요 (졸업학점·기타 졸업요건 문서 미제공)')
@@ -139,9 +146,13 @@ def render_result(result):
  if result.get('next_steps'):
   st.markdown('**다음에 준비할 항목**')
   st.dataframe(table(result['next_steps'],lang),width='stretch')
- for issue in result['issues']: st.warning(issue)
+ if result['issues']:
+  with st.expander(f"인정 정보 확인이 필요한 항목 ({len(result['issues'])})",expanded=False):
+   st.caption('이 항목은 입력 화면에서 보완할 수 있습니다. 공식 인정 확인이 없으면 충족으로 처리하지 않습니다.')
+   for issue in result['issues']: st.warning(issue)
  if result.get('source'): raw_st.caption(f"{tr('근거: ',lang)}{result['source']} p.{result['page']}")
  st.download_button('진단 결과 JSON 다운로드',json.dumps(result,ensure_ascii=False,indent=2),'graduation_result.json',mime='application/json')
+ st.download_button('진단 결과 CSV 다운로드',result_csv(result),'graduation_result.csv',mime='text/csv')
 def upload_panel():
  st.subheader('졸업기준 자료실')
  st.caption('제공 PDF는 공통 자료입니다. 추가 업로드는 현재 앱 계정에만 저장되며 다른 계정 검색에 포함되지 않습니다.')
@@ -167,6 +178,16 @@ if menu=='교수용 과제 평가':
  st.info('이 화면은 가상 사례를 이용한 과제 확인용입니다. 실제 학생의 개인 기록을 불러오거나 저장하지 않습니다.')
  st.markdown('**1. PDF 질문·답변 / 2. 수강 목록과 활동 입력 / 3. 규칙 기반 진단**')
  st.caption('PDF 단독 RAG 메뉴에서 직접 질문하거나 아래 가상 사례로 영역별 판정을 확인하세요.')
+ st.markdown('**3분 체험: 질문 → 원문 확인 → 문서 추가 → 과목·활동 입력 → 진단 → 후속 상담**')
+ demo_cols=raw_st.columns(2)
+ with demo_cols[0]: st.button('1. 2022학번 질문 바로 체험',key='demo_question',on_click=open_consultation,args=('AI·빅데이터학과 2022학번 졸업인증 총점과 필수 조건 알려줘','PDF 단독 RAG'),width='stretch')
+ with demo_cols[1]: st.button('4. 가상 입력으로 진단 시작',key='demo_inputs',on_click=fill_demo_inputs,args=(st.session_state,department,year),width='stretch')
+ st.caption('가상 입력은 명시적으로 버튼을 눌렀을 때만 현재 세션에 채워집니다. AI2022 예시는 글로벌 2점이 부족한 93/95점 사례입니다.')
+ st.markdown('**2. 답변 아래 PDF 원문에서 5쪽을 확인하세요. 3. 다음 파일을 내려받아 직접 업로드해 보세요.**')
+ for filename,title in [('synthetic_extra_document.pdf','가상 추가 PDF 다운로드'),('synthetic_courses.csv','샘플 수강 CSV 다운로드'),('synthetic_courses.xlsx','샘플 수강 XLSX 다운로드')]:
+  sample_path=ROOT/'examples'/filename
+  if sample_path.is_file(): st.download_button(title,sample_path.read_bytes(),filename,key='demo_download_'+filename)
+ st.caption('추가 PDF는 합성 시연 자료입니다. 학교 규정이 아니며 진단 점수를 바꾸지 않습니다. 다중 문서 메뉴에서 등록 후 “시연자료 확인코드 알려줘”로 검색하세요.')
  with st.expander('처음 오셨나요? 사용 순서 보기'):
   st.subheader('교수용 과제 평가')
   st.markdown('**교수님 확인 순서**\n1. 왼쪽에서 PDF 단독 RAG를 선택해 질문하고 출처를 확인합니다.\n2. 다국어 임베딩 + FAISS를 켜 실제 벡터 검색을 확인합니다.\n3. 다중 문서 RAG에서 별도 PDF를 등록한 뒤 새 문서 내용으로 질문합니다.\n4. 졸업요건 진단에서 수강 CSV/XLSX와 활동을 입력하고 부족한 항목을 확인합니다.')
@@ -192,34 +213,61 @@ elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG
  context=hashlib.sha256(json.dumps([department,year,mode,sig,criteria_sig,lang,guide_sig],ensure_ascii=False).encode()).hexdigest()
  histories=st.session_state.setdefault('chat_histories',{})
  st.session_state.messages=histories.setdefault(context,[])
+ source_history=st.session_state.setdefault('chat_sources',{}).setdefault(context,{})
+ personal=consultation_context(st.session_state.get('diagnostic_results',{}).get(profile_key),department,year,st.session_state.get('diagnostic_inputs',{}).get(profile_key),criteria_sig,diagnostic_sig,user['account_id'])
+ if personal:
+  st.caption('현재 학과·학번의 내 진단 결과가 상담에 연결됩니다. 점수는 Python 진단 결과를 그대로 사용합니다.')
+  if personal.get('_stale'): st.warning('진단 후 입력·기준이 바뀌었거나 재확인 시점이 지났습니다. 진단 메뉴에서 다시 계산해 주세요.')
  if st.button('현재 대화 지우기'):
-  histories[context]=[]; st.session_state.messages=[]
- def render_message(role,content):
+  histories[context]=[]; st.session_state.messages=[];source_history.clear()
+ def render_message(role,content,hits=(),message_index=0):
   with st.chat_message(role,avatar=':material/school:' if role=='assistant' else ':material/person:'):
    main,separator,source=content.partition('\n\n근거 원문:\n')
    if role=='assistant': raw_st.markdown(main,unsafe_allow_html=False)
    else: st.text(main)
    if separator:
     with st.expander('근거 원문 보기'): raw_st.text(source)
- for role,content in st.session_state.get('messages',[]): render_message(role,content)
- sample=st.selectbox('추천 질문',['졸업인증 총점','학과활동 기준','코딩역량인증제 조건','자격증 인정 점수'],key='sample_question')
+   if role=='assistant' and hits:
+    allowed={(d.metadata['source'],d.metadata['page']) for d in docs}
+    scoped=[d for d in hits if (d.metadata.get('source'),d.metadata.get('page')) in allowed]
+    render_pdf_sources(raw_st,scoped,[DATA] if mode=='제공 PDF 한 개' else [DATA,UPLOAD_DATA],key_prefix='sources_'+context+'_'+str(message_index),lang=lang)
+    if user['role']=='evaluator':
+     from src.rag_chain import retrieval_diagnostics
+     with st.expander('검색 검증 정보 (교수용)'):
+      raw_st.json(retrieval_diagnostics(scoped,store))
+ for n,(role,content) in enumerate(st.session_state.get('messages',[])): render_message(role,content,source_history.get(n,()),n)
+ options=['졸업인증 총점','학과활동 기준','코딩역량인증제 조건','자격증 인정 점수']
+ if personal: options+=['나는 어떤 활동이 부족해?','졸업인증을 충족하려면 무엇부터 준비해야 해?','이미 이수한 과목은 무엇이야?','어떤 영역에서 점수가 가장 부족해?','자격증을 취득하면 어떤 항목을 충족할 수 있어?','내 진단 결과를 쉽게 설명해 줘.']
+ sample=st.selectbox('추천 질문',options,key='sample_question')
  ask_sample=st.button('선택한 질문 보내기')
  q=st.chat_input('예: AI·빅데이터학과 2022학번 졸업인증 총점은?',max_chars=2000)
+ pending=st.session_state.pop('pending_chat_question',None)
+ if pending and pending[0]==profile_key: q=pending[1]
  if ask_sample: q=sample
  if q:
   with st.chat_message('user',avatar=':material/person:'): st.text(q)
   previous_question=next((content for role,content in reversed(st.session_state.messages) if role=='user'),None)
-  personal=st.session_state.get('diagnostic_results',{}).get(profile_key)
-  if personal: personal=dict(personal,_stale=is_stale(personal,st.session_state.get('diagnostic_inputs',{}).get(profile_key),criteria_sig,sig))
   with st.spinner('문서에서 근거를 확인하고 있어요…'):
    result,hits=answer_in_language(q,docs,department,year,store,llm,lang,mode=='학과·졸업 통합',previous_question,personal)
-  render_message('assistant',result)
+  answer_index=len(st.session_state.messages)+1
+  source_history[answer_index]=hits
+  render_message('assistant',result,hits,answer_index)
   st.session_state.messages.extend([('user',q),('assistant',result)])
 elif menu=='졸업요건 진단':
  render_section(raw_st,lang,'diagnosis',department,year)
  rule=get_rule(department,year)
  if not rule: st.warning('확인 필요: 해당 학과·학번 기준이 없습니다. 공식 기준 문서를 추가하고 검수해야 합니다.'); st.stop()
  st.caption(f"원본 p.{rule['page']} · 필요 합계 {sum(rule['required'].values())}점")
+ if st.session_state.get('synthetic_input_scope')==profile_key: st.info('가상 시연 입력입니다. 실제 학생의 기록이나 학교의 승인 내역이 아닙니다.')
+ step_placeholder=raw_st.empty()
+ with step_placeholder.container(): show_steps(raw_st,lang,1)
+ st.subheader('1. 학과·학번 확인')
+ st.info(f'{department} · {year}학번 — 변경은 왼쪽 학과·입학연도 선택에서 할 수 있습니다.')
+ st.subheader('2. 수강 과목 입력')
+ st.caption('CSV/XLSX 업로드, 과목 선택, 직접 입력을 함께 사용할 수 있습니다. 중복 이수는 한 번만 계산합니다.')
+ for filename,label in [('synthetic_courses.csv','샘플 수강 CSV 다운로드'),('synthetic_courses.xlsx','샘플 수강 XLSX 다운로드')]:
+  path=ROOT/'examples'/filename
+  if path.is_file(): st.download_button(label,path.read_bytes(),filename,key='course_template_'+filename)
  items=common_items(year)+rule['items']
  scope=f'{department}_{year}'
  restore_draft(st.session_state,scope)
@@ -239,6 +287,8 @@ elif menu=='졸업요건 진단':
  selected+=st.session_state.get('saved_courses',{}).get(scope,[])
  selected+=manual.splitlines()
  st.caption('띄어쓰기와 유니코드 정규화만 적용합니다. 다른 이름은 자동 인정하지 않습니다. 대학공통 항목은 공식 이수 여부로 체크하세요.')
+ st.subheader('3. 활동·공식 인정 정보 입력')
+ st.info('필수: 실제 이수한 항목을 체크하세요. 언어영역·대회·자율활동은 학교의 공식 인정 정보가 있어야 충족으로 계산합니다.')
  activities={}
  evidence={}
  for i in items:
@@ -285,7 +335,11 @@ elif menu=='졸업요건 진단':
      official_requirements[area]=value
     except ValueError:
      st.error(area+': 0 이상의 점수를 입력하세요.'); upload_error=True
+ st.subheader('4. 입력 확인 후 진단')
+ pending_evidence=[i['name'] for i in items if i['kind'] in ['official_course','official_points'] and not evidence.get(i['name'],{}).get('confirmed')]
+ if pending_evidence: st.caption('공식 인정 확인이 남은 항목: '+', '.join(pending_evidence))
  complete=st.checkbox('이수 내역을 모두 입력했습니다. 미선택 항목은 미이수입니다.',key=scope+'complete')
+ with step_placeholder.container(): show_steps(raw_st,lang,4 if complete else 3 if selected else 2)
  signature=input_signature(department,year,selected,activities,complete,evidence,official_requirements)
  st.session_state.setdefault('diagnostic_inputs',{})[profile_key]=signature
  remember_draft(st.session_state,scope)
@@ -295,15 +349,18 @@ elif menu=='졸업요건 진단':
   except ValueError as exc: st.error(str(exc))
  st.caption('체험 입력과 결과는 현재 세션에서만 유지됩니다.' if user.get('guest') else '진단 실행 시 입력과 결과를 내 앱 계정에 저장합니다.')
  previous=st.session_state.get('diagnostic_results',{}).get(profile_key)
- if previous and is_stale(previous,signature,criteria_sig,sig):
+ if previous and is_stale(previous,signature,criteria_sig,diagnostic_sig):
   st.warning('입력 내용이 지난 진단 이후 변경되었습니다. 결과를 다시 계산해 주세요.')
  if st.button('나의 졸업인증 진단',type='primary',disabled=upload_error):
   try:
    result=check(department,year,selected,activities,complete,evidence,official_requirements)
-   result=stamp_result(result,signature,criteria_sig,sig)
+   result=stamp_result(result,signature,criteria_sig,diagnostic_sig,inputs=input_payload(department,year,selected,activities,complete,evidence,official_requirements),owner_id=user['account_id'])
+   if st.session_state.get('synthetic_input_scope')==profile_key: result['synthetic']=True
    st.session_state.result=result
    st.session_state.setdefault('diagnostic_results',{})[profile_key]=result
    persist(st,user,scope)
+   with step_placeholder.container(): show_steps(raw_st,lang,5)
+   st.subheader('5. 부족 조건 확인 및 상담')
    render_result(result)
   except ValueError as exc: st.error(str(exc))
 elif menu=='학과 안내':

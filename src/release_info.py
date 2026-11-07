@@ -10,7 +10,7 @@ from .utils import ROOT
 def runtime_files(root=ROOT):
     root=Path(root)
     paths=[root/'app.py',root/'deploy.py',root/'requirements.txt']
-    for folder,pattern in [('src','*.py'),('rules','*.json'),('references','*.json'),('data','*.pdf'),('.streamlit','*.toml')]:
+    for folder,pattern in [('src','*.py'),('rules','*.json'),('references','*.json'),('data','*.pdf'),('.streamlit','*.toml'),('examples','*.csv'),('examples','*.xlsx'),('examples','*.pdf')]:
         paths.extend((root/folder).rglob(pattern))
     return sorted((p for p in paths if p.is_file()),key=lambda p:p.relative_to(root).as_posix())
 

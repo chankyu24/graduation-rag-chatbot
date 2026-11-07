@@ -9,13 +9,16 @@ COPY requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu \
     && python -m pip install --no-cache-dir -r requirements.txt
 # Prepare and validate the default model during the build, not the professor's first query.
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', device='cpu')"
+COPY src/embedding_onnx.py /tmp/embedding_onnx.py
+RUN PYTHONPATH=/tmp python -c "from embedding_onnx import QuantizedMultilingualEmbeddings; model=QuantizedMultilingualEmbeddings(); assert len(model.embed_query('졸업인증'))==384"
 ENV HF_HUB_OFFLINE=1
+ENV EMBEDDING_BACKEND=onnx RAG_VECTOR_DEFAULT=1
 COPY app.py deploy.py ./
 COPY src ./src
 COPY data ./data
 COPY rules ./rules
 COPY references ./references
+COPY examples ./examples
 COPY .streamlit ./.streamlit
 RUN useradd --create-home appuser && chown -R appuser:appuser /app /opt/models
 USER appuser

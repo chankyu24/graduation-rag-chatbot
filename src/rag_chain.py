@@ -1,6 +1,7 @@
 """Grounded retrieval with year-scoped evidence for the supplied PDF."""
 import os
 import re
+from time import perf_counter
 from langchain_core.documents import Document
 from .utils import normalize
 from .graduation_rules import load_rules, get_rule, common_items
@@ -59,6 +60,10 @@ def normalize_question(question):
     for alias, canonical in [('SQLD','SQL개발자'),('ADsP','데이터분석준전문가')]:
         question=re.sub(r'(?<![A-Za-z])'+alias+r'(?![A-Za-z])',canonical,question,flags=re.IGNORECASE)
     replacements=[
+        (r'프로그래밍\s*(?:능력|역량)?\s*인증(?:제)?','코딩역량인증제'),
+        (r'코딩\s*능력\s*인증(?:제)?','코딩역량인증제'),
+        (r'전체\s*인증\s*점수|총합\s*점수|점수\s*총합','총점'),
+        (r'필수\s*(?:교과목|수강\s*과목)','필수과목'),
         (r'코테','코딩역량인증제'),
         (r'(?:따면|땄으면|취득했으면)',' 취득하면 '),
         (r'코딩\s*역량\s*인증\s*(?:제|평가)?','코딩역량인증제'),
@@ -142,11 +147,46 @@ def supported(question, text, department=None, year=None):
         if normalize(canonical).lower() not in target and normalize(word).lower() not in target:
             return False
     if significant: return True
-    return any(normalize(s).lower() in normalized for s in GENERAL)
+    # Generic questions still need topical evidence in the target document.
+    # Previously every uploaded page (even an unrelated restaurant menu) passed
+    # "졸업인증 총점" because only the query was checked here.
+    anchors=['졸업요건','졸업기준','졸업인증','인증점수','총점','필수과목','교과','과목']
+    if any(normalize(s).lower() in normalized and any(normalize(form).lower() in target for form in (s,ALIASES.get(s,s))) for s in anchors):
+        return True
+    return any(normalize(s).lower() in normalized for s in GENERAL) and any(anchor in target for anchor in ['졸업인증','졸업요건','졸업기준','인증점수'])
+
+
+def _page_key(document):
+    return document.metadata.get('source'),document.metadata.get('page')
+
+
+def _additional_scope(document,department,year,department_names=None):
+    metadata=document.metadata
+    if metadata.get('department') and normalize(metadata['department'])!=normalize(department): return False
+    if metadata.get('year') is not None and str(metadata['year'])!=str(year): return False
+    text=normalize(document.page_content).casefold()
+    department_names=department_names or {r['department'] for r in load_rules()['profiles']}
+    known=[d for d in department_names if normalize(d).casefold() in text]
+    if known and department not in known: return False
+    ranges=re.findall(r'(20\d{2})\s*[~～\-]\s*(20\d{2})\s*학번',document.page_content)
+    singles=re.findall(r'(20\d{2})\s*학번',document.page_content)
+    if year and (ranges or singles) and not (any(int(a)<=int(year)<=int(b) for a,b in ranges) or str(year) in singles): return False
+    return True
+
+
+def retrieval_diagnostics(hits,store=None):
+    """Execution facts, never a confidence percentage or an accuracy claim."""
+    details=next((d.metadata.get('retrieval_diagnostics') for d in hits if d.metadata.get('retrieval_diagnostics')),None)
+    if not details:
+        details=({'mode':'reviewed_rule_or_diagnosis','vector_attempted':False,'vector_ok':False,'elapsed_ms':0,'error_type':''}
+                 if hits else getattr(store,'_graduation_retrieval_diagnostics',{}))
+    return {**details,'evidence_count':len(hits),'source_count':len({d.metadata.get('source') for d in hits})}
 
 
 def retrieve(question, documents, department=None, year=None, store=None, k=4):
+    started=perf_counter()
     original = load_rules()['source']
+    department_names={r['department'] for r in load_rules()['profiles']}
     rule = get_rule(department,year) if department and year else None
     candidates=[]
     seen=set()
@@ -157,17 +197,7 @@ def retrieve(question, documents, department=None, year=None, store=None, k=4):
             if key in seen: continue
             seen.add(key)
             candidates.append(scoped_original(rule,year))
-        else:
-            text=normalize(doc.page_content)
-            known=[d for d in {r['department'] for r in load_rules()['profiles']} if normalize(d) in text]
-            if known and department not in known: continue
-            # Explicit admission-year coverage overrides generic semantic similarity.
-            ranges=re.findall(r'(20\d{2})\s*[~～\-]\s*(20\d{2})\s*학번',doc.page_content)
-            singles=re.findall(r'(20\d{2})\s*학번',doc.page_content)
-            if year and (ranges or singles):
-                covered=any(int(a)<=year<=int(b) for a,b in ranges) or str(year) in singles
-                if not covered: continue
-            candidates.append(doc)
+        elif _additional_scope(doc,department,year,department_names): candidates.append(doc)
     lexical=[]
     for doc in candidates:
         if supported(question,doc.page_content,department,year):
@@ -175,14 +205,37 @@ def retrieve(question, documents, department=None, year=None, store=None, k=4):
             score=len(q & terms(doc.page_content))/max(1,len(q))
             lexical.append((score,doc))
     lexical.sort(key=lambda row:row[0],reverse=True)
-    # Semantic ranks eligible pages, retaining the scoped version instead of raw multi-cohort tables.
-    if store is not None and lexical:
+    # Run the real vector query even if an unsupported question is ultimately
+    # refused. Lexical topic support is a safety gate, not a substitute for FAISS.
+    attempted=store is not None;vector_ok=False;error_type='';ranked={}
+    pages={_page_key(d):d for _,d in lexical}
+    if store is not None:
         try:
-            eligible=lambda metadata: metadata.get('source')!=original or (metadata.get('department')==department and metadata.get('year')==year)
-            ranks={(d.metadata['source'],d.metadata['page']):i for i,d in enumerate(store.similarity_search(question,k=40,filter=eligible,fetch_k=store.index.ntotal))}
-            lexical.sort(key=lambda row:ranks.get((row[1].metadata['source'],row[1].metadata['page']),999))
-        except Exception:
-            pass  # Exact evidence search remains usable if a vector query fails.
+            eligible=lambda metadata: (metadata.get('source'),metadata.get('page')) in pages and (metadata.get('source')!=original or (metadata.get('department')==department and metadata.get('year')==year))
+            total=max(1,int(store.index.ntotal))
+            if hasattr(store,'similarity_search_with_score'):
+                found=store.similarity_search_with_score(question,k=min(40,total),filter=eligible,fetch_k=total)
+            else:
+                found=[(d,None) for d in store.similarity_search(question,k=min(40,total),filter=eligible,fetch_k=total)]
+            vector_ok=True
+            for rank,(hit,distance) in enumerate(found,1):
+                key=_page_key(hit)
+                if key in ranked or key not in pages or not eligible(hit.metadata): continue
+                current=pages[key]
+                # Reject stale/foreign index text even if filenames match.
+                if key[0]==original:
+                    if normalize(hit.page_content)!=normalize(current.page_content): continue
+                    content=current.page_content
+                else:
+                    content=hit.page_content.strip()
+                    if not content or content not in current.page_content or not supported(question,content,department,year): continue
+                meta={**current.metadata,**hit.metadata,'vector_rank':rank}
+                if distance is not None: meta['vector_distance']=float(distance)
+                ranked[key]=Document(page_content=content,metadata=meta)
+            lexical.sort(key=lambda row:(ranked[_page_key(row[1])].metadata['vector_rank'] if _page_key(row[1]) in ranked else total+1,-row[0]))
+        except Exception as exc:
+            error_type=type(exc).__name__  # Never expose credential-bearing error text.
+    lexical=[(score,ranked.get(_page_key(doc),doc)) for score,doc in lexical]
     # Diverse sources first so a long file cannot suppress a conflicting document.
     chosen=[]; sources=set()
     for _,doc in lexical:
@@ -190,7 +243,16 @@ def retrieve(question, documents, department=None, year=None, store=None, k=4):
             chosen.append(doc); sources.add(doc.metadata['source'])
     for _,doc in lexical:
         if all((doc.metadata['source'],doc.metadata['page'])!=(d.metadata['source'],d.metadata['page']) for d in chosen): chosen.append(doc)
-    return chosen[:max(k,len(sources))]
+    chosen=chosen[:max(k,len(sources))]
+    mode='hybrid' if ranked and chosen else 'keyword_fallback' if attempted and not vector_ok else 'keyword' if chosen else 'no_evidence'
+    diagnostics={'mode':mode,'vector_attempted':attempted,'vector_ok':vector_ok,'elapsed_ms':round((perf_counter()-started)*1000,2),'error_type':error_type}
+    if store is not None:
+        try: store._graduation_retrieval_diagnostics=diagnostics
+        except (AttributeError,TypeError): pass
+    # Keep the existing keyword-only Document contract, including caller metadata.
+    # Vector execution facts belong to the vector path; don't mutate input pages.
+    if store is None: return chosen
+    return [Document(page_content=doc.page_content,metadata={**doc.metadata,'retrieval_diagnostics':diagnostics}) for doc in chosen]
 
 
 def answer(question, documents, department=None, year=None, store=None, use_llm=False):

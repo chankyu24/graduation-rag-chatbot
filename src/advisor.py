@@ -5,6 +5,7 @@ from .graduation_rules import get_rule,common_items,load_rules
 from .utils import normalize
 from .rag_chain import answer,normalize_question,admission_years
 from .department_guide import guide_data,guide_documents
+from .diagnosis_advisor import diagnostic_answer,personal_intent
 
 TOPICS=[
     ('코딩역량인증제',r'코딩|코테|coding'),
@@ -140,18 +141,8 @@ def website_answer(question,department):
     return '\n'.join(lines)+'\n'+data['scope_note']+f"\n출처: {data['curriculum_url']} (확인일 {data['checked_at']})",[d for d in docs if d.metadata['page'] in used]
 
 
-def personal_answer(question,personal_result):
-    q=normalize(question)
-    if re.search(r'졸업\s*(?:하려면|할려면)',question) and not re.search(r'더|남|부족|내\s*(?:점수|진단|결과)',question):
-        return None
-    if not re.search(r'내(?:진단|점수|결과|부족)|나(?:는|의|도)?졸업|내가졸업|얼마나남|뭐가부족|뭘더해야',q): return None
-    if not personal_result:
-        return '아직 이 학과·학번의 개인 진단 내역이 없습니다. 졸업요건 진단 메뉴에서 수강 목록과 활동을 입력하고 진단을 실행해 주세요.',[]
-    if personal_result.get('_stale'):
-        return '입력이나 기준이 바뀌어 저장된 진단 결과가 최신 상태가 아닙니다. 졸업요건 진단에서 다시 계산해 주세요.',[]
-    result=personal_result
-    steps='\n'.join('- '+i['action'] for i in result.get('next_steps',[])[:12])
-    return f"입력 내역에 따른 다면적 졸업인증 판정은 **{result['status']}**입니다. 확인된 점수는 {result.get('total_earned',0)} / {result.get('total_required',0)}점입니다.\n"+steps+'\n이것은 본인이 입력한 내역에 따른 계산이며, 전체 졸업 확정은 공식 학사시스템에서 확인해야 합니다.',[]
+def personal_answer(question,personal_result,previous_question=None):
+    return diagnostic_answer(question,personal_result,previous_question)
 
 
 def additional_policy_answer(question,documents,department,year,store,use_llm):
@@ -174,7 +165,7 @@ def additional_policy_answer(question,documents,department,year,store,use_llm):
 
 
 def answer_advisor(question,documents,department,year,store=None,use_llm=False,include_guide=False,previous_question=None,personal_result=None):
-    if previous_question and not topics(question) and len(topics(previous_question))>1 and re.search(r'그럼|그거|그건|몇\s*점|몇\s*회',question):
+    if previous_question and not topics(question) and len(topics(previous_question))>1 and re.search(r'그럼|그거|그건|몇\s*점|몇\s*회',question) and not personal_intent(question,previous_question,bool(personal_result)):
         return '앞서 여러 항목을 이야기했습니다. 어떤 항목의 조건이나 점수를 뜻하는지 알려주세요: '+', '.join(topics(previous_question)),[]
     question,department,year=resolve_question(question,department,year,previous_question)
     explicit_departments=[name for name in {r['department'] for r in load_rules()['profiles']} if normalize(name) in normalize(question)]
@@ -187,7 +178,7 @@ def answer_advisor(question,documents,department,year,store=None,use_llm=False,i
             return additional
         return '제공된 자료에는 적용 학번의 전체 졸업학점 기준이 없습니다. 졸업인증 점수와 졸업학점은 다릅니다. 학번별 교육과정 이수기준표 또는 학과의 공식 졸업학점 규정이 필요합니다.',[]
     if personal_result and (personal_result.get('year')!=year or personal_result.get('department')!=department): personal_result=None
-    personal=personal_answer(question,personal_result)
+    personal=personal_answer(question,personal_result,previous_question)
     if personal is not None: return personal
     rule=get_rule(department,year)
     if rule and re.search('필수|반드시',question):
