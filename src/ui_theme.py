@@ -184,7 +184,7 @@ _CSS = """
 [data-testid="stSidebar"] [data-testid="stRadio"] label:hover {background: #1a384d;}
 [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {background: #214352; border-color: #3b6271;}
 [data-testid="stSidebar"] [data-testid="stExpander"] {background: #172f43; border-color: #30495c;}
-[data-testid="stSidebar"] [data-testid="stExpander"] summary {color: #eef4f5;}
+[data-testid="stSidebar"] [data-testid="stExpander"] summary {color: #eef4f5; background: #172f43;}
 [data-testid="stSidebar"] :is([data-testid="stTextInput"],[data-testid="stNumberInput"],[data-baseweb="select"]) input {color: var(--sch-ink);}
 [data-testid="stSidebar"] [data-baseweb="select"] {color: var(--sch-ink);}
 [data-testid="stSidebar"] [data-baseweb="select"] p {color: var(--sch-ink);}
