@@ -24,7 +24,9 @@ def release_info(root=ROOT):
         digest.update((name+'\0'+file_hash+'\n').encode('utf8'))
     commit=os.getenv('RAILWAY_GIT_COMMIT_SHA','')
     if not commit:
-        try: commit=json.loads((root/'SOURCE_VERSION.json').read_text(encoding='utf8')).get('source_commit','')
+        try:
+            saved=json.loads((root/'SOURCE_VERSION.json').read_text(encoding='utf8'))
+            if saved.get('runtime_sha256')==digest.hexdigest(): commit=saved.get('source_commit','')
         except (OSError,ValueError,TypeError): pass
     return {'source_commit':commit if re.fullmatch('[0-9a-f]{40}',commit or '') else None,
             'runtime_sha256':digest.hexdigest(),'runtime_files':files}

@@ -11,6 +11,13 @@ def guest_environment(tmp_path,monkeypatch):
     monkeypatch.setenv('RAG_VECTOR_DEFAULT','0')
 
 
+def assistant_bodies(app):
+    """Only the assistant body may satisfy an answer assertion."""
+    return ['\n'.join(element.value for element in message.children.values()
+                      if element.type in {'text','markdown'})
+            for message in app.chat_message if message.name=='assistant']
+
+
 def test_guest_sessions_are_separate_and_cleanup_uploads():
     a={};b={};user=start_guest_review(a);start_guest_review(b)
     assert user['account_id']!=b['guest_user']['account_id']
@@ -41,7 +48,7 @@ def test_professor_can_enter_actual_app_without_account():
     assert any(h.value=='교수용 과제 평가' for h in app.subheader)
     app.sidebar.radio[0].set_value('PDF 단독 RAG').run(timeout=90)
     app.chat_input[0].set_value('코딩역량 인증제 조건이 뭐야?').run(timeout=90)
-    assert not app.exception and any('Level 2' in t.value and 'p.5' in t.value for t in app.text)
+    assert not app.exception and any('Level 2' in body and 'p.5' in body for body in assistant_bodies(app))
     app.sidebar.radio[0].set_value('다중 문서 RAG').run(timeout=90)
     assert any(u.label=='PDF 추가' for u in app.get('file_uploader'))
     app.sidebar.radio[0].set_value('졸업요건 진단').run(timeout=90)
@@ -83,6 +90,27 @@ def test_guest_vector_and_corpus_are_session_scoped(monkeypatch):
     app.run(timeout=90)
     assert not app.exception and len(app.session_state.guest_corpus[0])==9
     app.chat_input[0].set_value('PRIVATE_GUEST_POLICY').run(timeout=90)
-    assert not app.exception and any('123' in text.value for text in app.text)
+    assert not app.exception and any('123' in body for body in assistant_bodies(app))
     next(b for b in app.sidebar.button if b.key=='leave_guest_review').click().run(timeout=90)
     assert not folder.exists() and 'guest_vector_store' not in app.session_state
+
+
+def test_chat_renders_assistant_markdown_without_enabling_untrusted_html(monkeypatch):
+    import src.multilingual
+    main='**테스트 답변** <script>alert("assistant")</script>'
+    source='[1] fixture.pdf p.1\n<svg onload="alert(1)">원문</svg>'
+    monkeypatch.setattr(src.multilingual,'answer_in_language',
+                        lambda *args,**kwargs:(main+'\n\n근거 원문:\n'+source,[]))
+    app=AppTest.from_file(str(ROOT/'app.py')).run(timeout=90)
+    next(b for b in app.button if b.key=='guest_review_entry').click().run(timeout=90)
+    app.sidebar.radio[0].set_value('PDF 단독 RAG').run(timeout=90)
+    question='<img src=x onerror="alert(2)">를 설명해줘'
+    app.chat_input[0].set_value(question).run(timeout=90)
+    assert not app.exception
+    user=next(message for message in app.chat_message if message.name=='user')
+    assistant=next(message for message in app.chat_message if message.name=='assistant')
+    assert [text.value for text in user.text]==[question]
+    body=[element for element in assistant.children.values() if element.type=='markdown']
+    assert len(body)==1 and body[0].value==main
+    assert body[0].proto.allow_html is False
+    assert [text.value for text in assistant.expander[0].text]==[source]

@@ -6,3 +6,11 @@ gatherUsageStats = false
 
 [server]
 maxUploadSize = 30
+
+[theme]
+base = "light"
+primaryColor = "#087F78"
+backgroundColor = "#F7F8F3"
+secondaryBackgroundColor = "#EFF5EF"
+textColor = "#142B43"
+font = "sans serif"

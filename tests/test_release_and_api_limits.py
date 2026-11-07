@@ -1,4 +1,4 @@
-import shutil
+import shutil,json
 from src.release_info import release_info,runtime_files
 from src.llm_settings import llm_options
 from src.utils import ROOT
@@ -11,13 +11,14 @@ def test_distribution_fingerprint_ignores_generated_reports_and_detects_rule_cha
         shutil.copyfile(p,target)
     expected=release_info()['runtime_sha256']
     assert release_info(tmp_path)['runtime_sha256']==expected
-    (tmp_path/'SOURCE_VERSION.json').write_text('{"source_commit":"'+'a'*40+'"}',encoding='utf8')
+    (tmp_path/'SOURCE_VERSION.json').write_text(json.dumps({'source_commit':'a'*40,'runtime_sha256':expected}),encoding='utf8')
     (tmp_path/'README.md').write_text('generated report',encoding='utf8')
     assert release_info(tmp_path)['runtime_sha256']==expected
     assert release_info(tmp_path)['source_commit']=='a'*40
     rule=tmp_path/'rules/graduation_rules.json'
     rule.write_bytes(rule.read_bytes()+b'\n')
     assert release_info(tmp_path)['runtime_sha256']!=expected
+    assert release_info(tmp_path)['source_commit'] is None
 
 
 def test_api_output_and_retry_limits_are_bounded(monkeypatch):

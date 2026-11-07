@@ -154,6 +154,25 @@ def personal_answer(question,personal_result):
     return f"입력 내역에 따른 다면적 졸업인증 판정은 **{result['status']}**입니다. 확인된 점수는 {result.get('total_earned',0)} / {result.get('total_required',0)}점입니다.\n"+steps+'\n이것은 본인이 입력한 내역에 따른 계산이며, 전체 졸업 확정은 공식 학사시스템에서 확인해야 합니다.',[]
 
 
+def additional_policy_answer(question,documents,department,year,store,use_llm):
+    """Let uploaded PDF evidence answer questions beyond the supplied draft.
+
+    The caller provides the active corpus, so this cannot reach documents that
+    were excluded by PDF-only mode. Reviewed website snapshots are not added
+    graduation policies and must not trigger this path.
+    """
+    original=load_rules()['source']
+    additional=[doc for doc in documents if doc.metadata.get('source')!=original and doc.metadata.get('kind')!='website']
+    if not additional:
+        return None
+    text,hits=answer(question,additional,department,year,store,use_llm)
+    if not hits:
+        return None
+    notice=('추가 등록 PDF에서 찾은 근거입니다. 문서의 적용 학과·학번과 공식 확정 여부를 확인하세요. '
+            '이 답변은 자동 진단 규칙을 변경하거나 개인의 최종 졸업을 확정하지 않습니다.\n')
+    return notice+text,hits
+
+
 def answer_advisor(question,documents,department,year,store=None,use_llm=False,include_guide=False,previous_question=None,personal_result=None):
     if previous_question and not topics(question) and len(topics(previous_question))>1 and re.search(r'그럼|그거|그건|몇\s*점|몇\s*회',question):
         return '앞서 여러 항목을 이야기했습니다. 어떤 항목의 조건이나 점수를 뜻하는지 알려주세요: '+', '.join(topics(previous_question)),[]
@@ -163,6 +182,9 @@ def answer_advisor(question,documents,department,year,store=None,use_llm=False,i
         return '학과를 하나씩 선택하여 질문해 주세요.',[]
     # Academic credits must never be manufactured from certification points.
     if re.search(r'졸업\s*학점|총\s*학점|졸업.*학점|학점.*졸업',question):
+        additional=additional_policy_answer(question,documents,department,year,store,use_llm)
+        if additional is not None:
+            return additional
         return '제공된 자료에는 적용 학번의 전체 졸업학점 기준이 없습니다. 졸업인증 점수와 졸업학점은 다릅니다. 학번별 교육과정 이수기준표 또는 학과의 공식 졸업학점 규정이 필요합니다.',[]
     if personal_result and (personal_result.get('year')!=year or personal_result.get('department')!=department): personal_result=None
     personal=personal_answer(question,personal_result)
@@ -172,6 +194,9 @@ def answer_advisor(question,documents,department,year,store=None,use_llm=False,i
         named=[course for rows in guide_data()['curriculum'].values() for course,_ in rows if normalize(course) in normalize(question)]
         named=sorted(set(named),key=len,reverse=True)
         if named and all(normalize(named[0])!=normalize(i['name']) for i in rule['items'] if i['kind']=='course') and any(d.metadata['source']==rule['source'] and d.metadata['page']==rule['page'] for d in documents):
+            additional=additional_policy_answer(question,documents,department,year,store,use_llm)
+            if additional is not None:
+                return additional
             from .rag_chain import scoped_original
             target=[i for i in rule['items'] if i['area']=='교과']
             info=', '.join(f"{i['name']} {i['points']}점" for i in target)

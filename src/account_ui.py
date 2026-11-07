@@ -2,6 +2,7 @@
 from .auth import register,authenticate,get_user,load_profiles,save_profile,change_password
 from .i18n import tr
 from .graduation_rules import load_rules
+from .ui_theme import render_welcome
 import secrets
 import tempfile
 
@@ -39,11 +40,19 @@ def require_login(st,lang):
             st.session_state.diagnostic_inputs={key:value['signature'] for key,value in saved.items() if value.get('signature')}
             st.session_state.account_loaded=True
         return user
-    st.subheader('로그인')
-    if st.button('교수님: 가입 없이 실제 챗봇 확인',key='guest_review_entry',type='primary'):
+    render_welcome(st.ui,lang,part='hero')
+    if st.button('가입 없이 챗봇 시작',key='guest_review_entry',type='primary',width='stretch'):
         start_guest_review(st.session_state)
         st.rerun()
-    st.caption('평가용 입구에서도 원본 Python의 PDF 검색·추가 업로드·진단을 사용할 수 있습니다. 학생 기록에 접근하지 않으며 입력은 이 세션에서만 유지됩니다.')
+    st.caption('교수님도 학생도 가입 없이 PDF 질문과 진단을 체험할 수 있습니다. 입력은 현재 세션에만 유지됩니다.')
+    render_welcome(st.ui,lang,part='features')
+    with st.expander('개인 기록을 저장하려면 로그인·회원가입'):
+        account_forms(st,lang)
+    st.stop()
+
+
+def account_forms(st,lang):
+    st.subheader('로그인')
     st.info('학교 학사시스템과 연결되지 않은 과제용 앱 계정입니다. 학교 비밀번호를 사용하지 마세요.')
     entry=st.radio('접속 유형',['학생','교수·평가자'],key='entry_role',horizontal=True)
     role='student' if entry=='학생' else 'evaluator'
@@ -86,7 +95,6 @@ def require_login(st,lang):
                 register(identifier,name,password,department,int(year),role)
                 st.success('계정을 만들었습니다. 왼쪽 로그인 입력란에서 로그인해 주세요.')
             except ValueError as exc: st.error(str(exc))
-    st.stop()
 
 
 def account_sidebar(st,user):

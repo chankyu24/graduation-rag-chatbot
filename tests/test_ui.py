@@ -19,6 +19,13 @@ def by_label(elements, label):
     return next(e for e in elements if e.label == label)
 
 
+def assistant_bodies(app):
+    """Inspect assistant answers, excluding user input, page chrome and evidence folds."""
+    return ['\n'.join(element.value for element in message.children.values()
+                      if element.type in {'text','markdown'})
+            for message in app.chat_message if message.name=='assistant']
+
+
 def test_all_menus():
     at=logged_app().run(timeout=90)
     assert not at.exception
@@ -32,7 +39,7 @@ def test_chat_and_diagnosis_ui():
     assert at.sidebar.selectbox[1].value=='AI·빅데이터학과'
     at.chat_input[0].set_value('2022학번 AI·빅데이터학과 졸업인증 총점').run(timeout=90)
     assert not at.exception
-    assert any('95점' in t.value and 'p.5' in t.value for t in at.text)
+    assert any('95점' in body and 'p.5' in body for body in assistant_bodies(at))
     at.sidebar.radio[0].set_value('졸업요건 진단').run(timeout=90)
     by_label(at.multiselect,'이수한 과목 선택').set_value(['예비창업설계'])
     by_label(at.text_input,'해당 영역에서 이수한 과목명').set_value('공식언어과목')
@@ -173,7 +180,7 @@ def test_evaluator_can_register_without_a_student_number():
     assert not at.session_state.diagnostic_results
     at.sidebar.radio[0].set_value('PDF 단독 RAG').run(timeout=90)
     at.chat_input[0].set_value('졸업인증 총점').run(timeout=90)
-    assert not at.exception and any('95점' in t.value for t in at.text)
+    assert not at.exception and any('95점' in body for body in assistant_bodies(at))
 
 
 def test_login_fields_emitted_without_tabs():
@@ -190,18 +197,19 @@ def test_conversational_coding_and_followup_in_ui():
     at=logged_app().run(timeout=90)
     at.chat_input[0].set_value('코딩역량 인증제 조건이 뭐야').run(timeout=90)
     assert not at.exception
-    assert any('Level 2 이상' in t.value and '5점' in t.value for t in at.text)
+    assert any('Level 2 이상' in body and '5점' in body for body in assistant_bodies(at))
     at.chat_input[0].set_value('그럼 몇 점이야?').run(timeout=90)
     assert not at.exception
-    assert sum('Level 2 이상' in t.value for t in at.text)>=2
+    assert sum('Level 2 이상' in body for body in assistant_bodies(at))>=2
 
 
 def test_integrated_chat_and_pdf_only_are_distinct():
     at=logged_app().run(timeout=90)
     at.chat_input[0].set_value('학과 사무실 전화번호 알려줘').run(timeout=90)
-    assert not any('041-530-1667' in t.value for t in at.text)
+    assert not at.exception and assistant_bodies(at)
+    assert not any('041-530-1667' in body for body in assistant_bodies(at))
     at.sidebar.radio[0].set_value('학과·졸업 통합 상담').run(timeout=90)
     at.chat_input[0].set_value('우리 학과 사무실 전화번호 뭐야').run(timeout=90)
-    assert not at.exception and any('041-530-1667' in t.value for t in at.text)
+    assert not at.exception and any('041-530-1667' in body for body in assistant_bodies(at))
     at.chat_input[0].set_value('3학년에는 무슨 과목 배워?').run(timeout=90)
-    assert any('자연어처리' in t.value for t in at.text)
+    assert any('자연어처리' in body for body in assistant_bodies(at))

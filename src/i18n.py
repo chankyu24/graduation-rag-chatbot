@@ -375,3 +375,15 @@ GLOSSARY.update({
 ' 범위여야 합니다.':(' within the allowed range.','，并在允许范围内。','の範囲内にしてください。'),
 '이수/인증 여부는 참·거짓 또는 0·1이어야 합니다.':('Completion/certification must be true/false or 0/1.','修读／认证状态须为真／假或0／1。','修得・認証の状態は真・偽または0・1にしてください。'),
 })
+
+
+MESSAGES.update({
+'가입 없이 챗봇 시작':('Start without an account','无需注册，开始使用','登録せずに始める'),
+'교수님도 학생도 가입 없이 PDF 질문과 진단을 체험할 수 있습니다. 입력은 현재 세션에만 유지됩니다.':('Instructors and students can try PDF questions and certification checks without registering. Inputs stay in this session only.','教师和学生均可无需注册体验PDF问答与认证诊断。输入仅在当前会话保留。','教員も学生も登録なしでPDFへの質問と認証チェックを体験できます。入力は現在のセッション内のみ保持します。'),
+'개인 기록을 저장하려면 로그인·회원가입':('Sign in or create an account to save your records','登录或注册以保存个人记录','記録を保存するにはログイン・登録'),
+'PDF에 질문하기':('Ask the PDF','向PDF提问','PDFに質問する'),
+'문서 추가하기':('Add documents','添加文档','文書を追加する'),
+'내 졸업인증 진단':('Check my progress','诊断我的认证进度','自分の認証状況を確認'),
+'처음 오셨나요? 사용 순서 보기':('First visit? See how it works','首次使用？查看操作步骤','初めての方へ：使い方を見る'),
+'문서에서 근거를 확인하고 있어요…':('Checking the source documents…','正在核对文档依据…','文書の根拠を確認しています…'),
+})

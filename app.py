@@ -6,6 +6,7 @@ from src.account_ui import require_login,account_sidebar,restore_draft,remember_
 from src.multilingual import answer_in_language
 from src.evaluation import CASES,evaluate_case
 from src.release_info import release_info
+from src.ui_theme import apply_theme,render_header,render_section,render_result_summary
 from src.department_guide import guide_documents
 from dotenv import load_dotenv
 from src.utils import ROOT,read_course_file
@@ -20,16 +21,15 @@ from src.text_splitter import split_documents
 from src.vector_store import fingerprint,build_store,load_store
 load_dotenv(ROOT/'.env')
 raw_st.set_page_config(page_title='순천향대 졸업 길잡이',page_icon='🎓',layout='wide')
-lang=raw_st.selectbox('언어 / Language / 语言 / 言語',list(LANGUAGES),format_func=lambda code:LANGUAGES[code],key='ui_language')
+apply_theme(raw_st)
+brand_column,language_column=raw_st.columns([3,1],vertical_alignment='center')
+with brand_column:
+ render_header(raw_st,raw_st.session_state.get('ui_language','ko'))
+with language_column:
+ lang=raw_st.selectbox('언어 / Language / 语言 / 言語',list(LANGUAGES),format_func=lambda code:LANGUAGES[code],key='ui_language',label_visibility='collapsed')
 st=LocalizedUI(raw_st,lang)
-st.markdown('<style>.stApp{background:#f5f7fc} h1,h2,h3{color:#183769} div.stButton>button{border-radius:10px} [data-testid=stForm]{background:white;border-radius:16px;padding:24px} [data-testid=stMetric]{background:white;border-radius:12px;padding:14px}</style>',unsafe_allow_html=True)
 st.title('🎓 순천향대 졸업 길잡이')
 st.caption('PDF 근거로 알아보고, 영역별 조건으로 준비하는 나의 졸업인증')
-with raw_st.expander('실행 버전 / Version / 版本 / バージョン'):
- release=release_info()
- raw_st.text('Git: '+(release['source_commit'] or '로컬 소스 / local source'))
- raw_st.text('Runtime SHA-256: '+release['runtime_sha256'])
- raw_st.caption('ZIP의 SOURCE_VERSION.json과 비교할 수 있습니다. / Compare with SOURCE_VERSION.json in the ZIP.')
 user=require_login(st,lang)
 account_sidebar(st,user)
 if lang!='ko': st.caption('원문 과목명과 근거는 한국어로 함께 표시됩니다. 자유로운 답변 번역은 API 연결이 필요할 수 있습니다.')
@@ -51,6 +51,11 @@ mode='제공 PDF 한 개' if menu=='PDF 단독 RAG' else '학과·졸업 통합'
 st.sidebar.caption('검색 범위: '+mode)
 vector=st.sidebar.toggle('다국어 임베딩 + FAISS',value=os.getenv('RAG_VECTOR_DEFAULT','0')=='1',help='처음에는 무료 모델 다운로드가 필요합니다. 끄면 인터넷 없는 원문 검색을 사용합니다.',key='rag_vector_enabled')
 llm=st.sidebar.toggle('LLM 답변 사용',value=False,key='llm_enabled')
+with raw_st.sidebar.expander('실행 버전 / Version / 版本 / バージョン'):
+ release=release_info()
+ raw_st.text('Git: '+(release['source_commit'] or '로컬 소스 / local source'))
+ raw_st.text('Runtime SHA-256: '+release['runtime_sha256'])
+ raw_st.caption('ZIP의 SOURCE_VERSION.json과 비교할 수 있습니다. / Compare with SOURCE_VERSION.json in the ZIP.')
 @st.cache_data
 def read_all(sig,private_path,include_uploads): return load_corpus(DATA,private_path,include_uploads)
 include_uploads=mode!='제공 PDF 한 개'
@@ -103,6 +108,14 @@ if vector and docs:
  except Exception as e: st.warning('벡터 검색 준비 실패. 원문 검색 사용: '+str(e))
 st.info('이 서비스는 다면적 졸업인증을 진단합니다. 최종 졸업 확정과 졸업학점은 학교 공식 학사시스템에서 확인하세요.')
 st.caption('현재 검색: '+('다국어 임베딩·FAISS' if store is not None else '검수된 기준표·키워드 검색')+' / 생성형 답변: '+('요청됨 (API 키·응답 검증 필요)' if llm else '사용 안 함'))
+
+def open_menu(target):
+ raw_st.session_state.main_menu=target
+
+quick_columns=raw_st.columns(3)
+for column,label,target in zip(quick_columns,['PDF에 질문하기','문서 추가하기','내 졸업인증 진단'],['PDF 단독 RAG','다중 문서 RAG','졸업요건 진단']):
+ with column:
+  st.button(label,key='quick_'+target,on_click=open_menu,args=(target,),width='stretch')
 def render_result(result):
  current_input=st.session_state.get('diagnostic_inputs',{}).get(profile_key)
  if is_stale(result,current_input,criteria_sig,sig):
@@ -111,6 +124,7 @@ def render_result(result):
   timestamp=datetime.fromisoformat(result['generated_at']).astimezone(timezone(timedelta(hours=9)))
   st.caption('진단 시각: '+timestamp.strftime('%Y-%m-%d %H:%M:%S KST'))
  st.subheader(result['status'])
+ render_result_summary(raw_st,lang,result)
  st.write('다면적 졸업인증 충족 예상' if result['status']=='충족' else '다면적 졸업인증: '+result['status'])
  st.write('전체 졸업 가능 여부: 확인 필요 (졸업학점·기타 졸업요건 문서 미제공)')
  st.caption(f"{result.get('department', '')} · {result.get('year', '')}학번")
@@ -149,16 +163,19 @@ def upload_panel():
 
 if menu=='교수용 과제 평가':
  if user['role']!='evaluator': st.error('평가자 계정으로 로그인해 주세요.'); st.stop()
- st.subheader('교수용 과제 평가')
+ render_section(raw_st,lang,'evaluation',department,year)
  st.info('이 화면은 가상 사례를 이용한 과제 확인용입니다. 실제 학생의 개인 기록을 불러오거나 저장하지 않습니다.')
  st.markdown('**1. PDF 질문·답변 / 2. 수강 목록과 활동 입력 / 3. 규칙 기반 진단**')
  st.caption('PDF 단독 RAG 메뉴에서 직접 질문하거나 아래 가상 사례로 영역별 판정을 확인하세요.')
- st.markdown('**교수님 확인 순서**\n1. 왼쪽에서 PDF 단독 RAG를 선택해 질문하고 출처를 확인합니다.\n2. 다국어 임베딩 + FAISS를 켜 실제 벡터 검색을 확인합니다.\n3. 다중 문서 RAG에서 별도 PDF를 등록한 뒤 새 문서 내용으로 질문합니다.\n4. 졸업요건 진단에서 수강 CSV/XLSX와 활동을 입력하고 부족한 항목을 확인합니다.')
- st.caption('이 화면은 간편 HTML이 아니라 원본 Python 프로그램입니다. API 키 없이 검색·계산을 사용할 수 있으며, 생성형 답변은 별도 API 설정이 필요합니다.')
+ with st.expander('처음 오셨나요? 사용 순서 보기'):
+  st.subheader('교수용 과제 평가')
+  st.markdown('**교수님 확인 순서**\n1. 왼쪽에서 PDF 단독 RAG를 선택해 질문하고 출처를 확인합니다.\n2. 다국어 임베딩 + FAISS를 켜 실제 벡터 검색을 확인합니다.\n3. 다중 문서 RAG에서 별도 PDF를 등록한 뒤 새 문서 내용으로 질문합니다.\n4. 졸업요건 진단에서 수강 CSV/XLSX와 활동을 입력하고 부족한 항목을 확인합니다.')
+  st.caption('이 화면은 간편 HTML이 아니라 원본 Python 프로그램입니다. API 키 없이 검색·계산을 사용할 수 있으며, 생성형 답변은 별도 API 설정이 필요합니다.')
  case=st.selectbox('가상 평가 사례',CASES,key='evaluation_case')
  if st.button('가상 사례 실행',type='primary'):
   evaluation=evaluate_case(department,year,case)
   st.subheader(evaluation['status'])
+  render_result_summary(raw_st,lang,evaluation)
   if evaluation.get('total_required') is not None:
    st.metric('현재 인증점수 / 필요점수',f"{evaluation['total_earned']} / {evaluation['total_required']}점")
   st.dataframe(table(evaluation['areas'],lang),width='stretch')
@@ -166,6 +183,7 @@ if menu=='교수용 과제 평가':
   for issue in evaluation['issues']: st.warning(issue)
   st.caption('가상 결과는 학생별 저장 기록이나 실제 졸업 판정에 반영되지 않습니다.')
 elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG']:
+ render_section(raw_st,lang,menu,department,year)
  if menu=='다중 문서 RAG':
   with st.expander('문서 등록 및 검색 상태',expanded=True): upload_panel()
  st.subheader('문서에 물어보세요')
@@ -177,9 +195,10 @@ elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG
  if st.button('현재 대화 지우기'):
   histories[context]=[]; st.session_state.messages=[]
  def render_message(role,content):
-  with st.chat_message(role):
+  with st.chat_message(role,avatar=':material/school:' if role=='assistant' else ':material/person:'):
    main,separator,source=content.partition('\n\n근거 원문:\n')
-   st.text(main)
+   if role=='assistant': raw_st.markdown(main,unsafe_allow_html=False)
+   else: st.text(main)
    if separator:
     with st.expander('근거 원문 보기'): raw_st.text(source)
  for role,content in st.session_state.get('messages',[]): render_message(role,content)
@@ -188,14 +207,16 @@ elif menu in ['학과·졸업 통합 상담','PDF 단독 RAG','다중 문서 RAG
  q=st.chat_input('예: AI·빅데이터학과 2022학번 졸업인증 총점은?',max_chars=2000)
  if ask_sample: q=sample
  if q:
-  with st.chat_message('user'): st.text(q)
+  with st.chat_message('user',avatar=':material/person:'): st.text(q)
   previous_question=next((content for role,content in reversed(st.session_state.messages) if role=='user'),None)
   personal=st.session_state.get('diagnostic_results',{}).get(profile_key)
   if personal: personal=dict(personal,_stale=is_stale(personal,st.session_state.get('diagnostic_inputs',{}).get(profile_key),criteria_sig,sig))
-  result,hits=answer_in_language(q,docs,department,year,store,llm,lang,mode=='학과·졸업 통합',previous_question,personal)
+  with st.spinner('문서에서 근거를 확인하고 있어요…'):
+   result,hits=answer_in_language(q,docs,department,year,store,llm,lang,mode=='학과·졸업 통합',previous_question,personal)
   render_message('assistant',result)
   st.session_state.messages.extend([('user',q),('assistant',result)])
 elif menu=='졸업요건 진단':
+ render_section(raw_st,lang,'diagnosis',department,year)
  rule=get_rule(department,year)
  if not rule: st.warning('확인 필요: 해당 학과·학번 기준이 없습니다. 공식 기준 문서를 추가하고 검수해야 합니다.'); st.stop()
  st.caption(f"원본 p.{rule['page']} · 필요 합계 {sum(rule['required'].values())}점")
@@ -205,7 +226,7 @@ elif menu=='졸업요건 진단':
  course_names=list(dict.fromkeys([i['name'] for i in items if i['kind']=='course']+[n for i in items for n in i.get('options',[])]))
  selected=list(st.multiselect('이수한 과목 선택',course_names,key=scope+'courses'))
  manual=st.text_area('직접 입력 (한 줄에 한 과목)',key=scope+'manual')
- csv=st.file_uploader('수강 과목 CSV / XLSX',type=['csv','xlsx'],key=scope+'csv')
+ csv=st.file_uploader('수강 과목 CSV / XLSX',type=['csv','xlsx'],key=scope+'csv',max_upload_size=5)
  upload_error=False
  if csv:
   try: st.session_state.setdefault('saved_courses',{})[scope]=read_course_file(csv.getvalue(),csv.name)

@@ -19,7 +19,7 @@ class RecordingUI:
 @pytest.mark.parametrize('lang', ['en', 'zh', 'ja'])
 def test_guest_entry_modes_and_validation_are_translated(lang):
     texts = [
-        '교수님: 가입 없이 실제 챗봇 확인',
+        '가입 없이 챗봇 시작',
         '교수·평가자 · 가입 없는 확인',
         '체험 종료',
         '업로드와 입력은 현재 세션 전용입니다. 체험 종료 시 파일을 정리합니다.',
@@ -105,7 +105,7 @@ def test_actual_guest_entry_and_diagnostic_controls_in_three_languages(tmp_path,
     app=AppTest.from_file(str(ROOT/'app.py')).run(timeout=90)
     next(s for s in app.selectbox if s.key=='ui_language').set_value(lang).run(timeout=90)
     entry=next(b for b in app.button if b.key=='guest_review_entry')
-    assert entry.label==tr('교수님: 가입 없이 실제 챗봇 확인',lang)
+    assert entry.label==tr('가입 없이 챗봇 시작',lang)
     entry.click().run(timeout=90)
     assert not app.exception
     assert any(tr('교수·평가자 · 가입 없는 확인',lang)==text.value for text in app.sidebar.text)
